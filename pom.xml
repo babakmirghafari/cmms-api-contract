@@ -26,6 +26,7 @@
     <jakarta.servlet.version>6.1.0</jakarta.servlet.version>
     <swagger-annotations.version>2.2.44</swagger-annotations.version>
     <spring-web.version>7.0.7</spring-web.version>
+    <spring-boot.version>4.0.6</spring-boot.version>
     <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
     <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
   </properties>
@@ -94,6 +95,14 @@
       <version>${spring-web.version}</version>
       <scope>provided</scope>
     </dependency>
+
+    <!-- Spring Boot autoconfigure — for generated OpenApiGeneratorApplication.java -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
+      <version>${spring-boot.version}</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -136,7 +145,7 @@
                 <openApiNullable>false</openApiNullable>
                 <dateLibrary>java8</dateLibrary>
                 <useTags>true</useTags>
-                <documentationProvider>springdoc</documentationProvider>
+                <documentationProvider>none</documentationProvider>
 
                 <!--
                   modelNameSuffix is intentionally empty.
