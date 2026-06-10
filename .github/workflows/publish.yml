@@ -59,7 +59,9 @@ jobs:
 
       - name: Read version from pom.xml
         id: version
-        run: echo "version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
+        run: |
+          VERSION=$(python3 -c "import xml.etree.ElementTree as ET; t=ET.parse('pom.xml'); ns={'m':'http://maven.apache.org/POM/4.0.0'}; print(t.getroot().find('m:version',ns).text)")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Set up Node 22
         uses: actions/setup-node@v4
