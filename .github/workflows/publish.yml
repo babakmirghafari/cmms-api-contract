@@ -64,10 +64,15 @@ jobs:
           registry-url: 'https://npm.pkg.github.com/'
           scope: '@babakmirghafari'
 
+      - name: Install redocly for spec bundling
+        run: npm install -g @redocly/cli
+
       - name: Build spec-distribution npm package
         run: |
           mkdir -p npm-contract/openapi
-          cp src/main/resources/openapi/api.yaml npm-contract/openapi/api.bundled.yaml
+          # Bundle the spec to inline all $ref references into a single file
+          npx @redocly/cli bundle src/main/resources/openapi/api.yaml \
+            --output npm-contract/openapi/api.bundled.yaml
           VERSION="${{ steps.version.outputs.version }}"
           cat > npm-contract/package.json <<PKGJSON
           {
