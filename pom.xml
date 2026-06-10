@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.cmms</groupId>
+  <artifactId>cmms-api-contract</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+
+  <name>CMMS API Contract</name>
+  <description>OpenAPI 3.1 contract for CMMS — single source of truth for all API interfaces. Publishes Spring Boot server stubs (delegation pattern) and Angular TypeScript client to GitHub Packages.</description>
+  <url>https://github.com/babakmirghafari/cmms-api-contract</url>
+
+  <properties>
+    <!-- Versions resolved on 2026-06-10 — re-run contract-api-generator to update -->
+    <java.version>25</java.version>
+    <maven.compiler.source>25</maven.compiler.source>
+    <maven.compiler.target>25</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <openapi-generator.version>7.23.0</openapi-generator.version>
+    <jackson.version>2.22.0</jackson.version>
+    <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
+    <jakarta.validation.version>3.0.0</jakarta.validation.version>
+    <jakarta.servlet.version>6.1.0</jakarta.servlet.version>
+    <swagger-annotations.version>2.2.44</swagger-annotations.version>
+    <spring-web.version>7.0.7</spring-web.version>
+    <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+    <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
+  </properties>
+
+  <dependencies>
+    <!-- Annotations on generated classes -->
+    <dependency>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+      <version>${jakarta.annotation.version}</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <!-- @Valid, @NotNull on generated models -->
+    <dependency>
+      <groupId>jakarta.validation</groupId>
+      <artifactId>jakarta.validation-api</artifactId>
+      <version>${jakarta.validation.version}</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <!-- HttpServletRequest in generated interfaces -->
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <version>${jakarta.servlet.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- @Operation, @Parameter on generated APIs -->
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>${swagger-annotations.version}</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <!-- JSON serialisation of generated models -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <!-- Java 8 time type support -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <version>${jackson.version}</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <!-- @RequestMapping, ResponseEntity in generated code -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+      <version>${spring-web.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- @Autowired in generated controllers -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>${spring-web.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- OpenAPI Generator — delegation pattern -->
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>${openapi-generator.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/resources/openapi/api.yaml</inputSpec>
+              <generatorName>spring</generatorName>
+              <apiPackage>com.cmms.api</apiPackage>
+              <modelPackage>com.cmms.model</modelPackage>
+              <configOptions>
+                <!--
+                  delegatePattern=true generates three artefacts per resource tag:
+                    {Resource}Api           — interface with all @RequestMapping annotations
+                    {Resource}ApiDelegate   — interface with pure business method signatures
+                    {Resource}ApiController — @Controller: implements Api, injects Delegate via Spring DI
+
+                  Spring Boot projects implement {Resource}ApiDelegate only.
+                  The controller is shipped inside this contract artifact and auto-scanned by Spring.
+                  Regenerating the contract never overwrites delegate implementations.
+                -->
+                <delegatePattern>true</delegatePattern>
+
+                <!--
+                  interfaceOnly must NOT be set (or must be false).
+                  Setting it true would suppress the generated controller and break the delegation pattern.
+                -->
+
+                <useSpringBoot3>true</useSpringBoot3>
+                <useJakartaEe>true</useJakartaEe>
+                <openApiNullable>false</openApiNullable>
+                <dateLibrary>java8</dateLibrary>
+                <useTags>true</useTags>
+                <documentationProvider>springdoc</documentationProvider>
+
+                <!--
+                  modelNameSuffix is intentionally empty.
+                  All schemas already carry the Dto suffix in the spec.
+                  Setting this to "Dto" would produce HealthResponseDtoDto — do not change.
+                -->
+                <modelNameSuffix></modelNameSuffix>
+              </configOptions>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Compiler -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+
+      <!-- Sources JAR -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>${maven-source-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Packages — Maven</name>
+      <url>https://maven.pkg.github.com/babakmirghafari/cmms-api-contract</url>
+    </repository>
+  </distributionManagement>
+
+</project>

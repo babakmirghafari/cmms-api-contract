@@ -1,0 +1,105 @@
+openapi: 3.1.0
+
+info:
+  title: CMMS API
+  description: |
+    REST API contract for CMMS (Computerized Maintenance Management System).
+
+    This specification is the single source of truth for all API interfaces.
+    Server stubs (Spring Boot) and client code (Angular) are generated from it.
+    Do not write HTTP glue code by hand — regenerate from this spec.
+  version: 1.0.0
+  contact:
+    name: CMMS Team
+    url: https://github.com/babakmirghafari/cmms-api-contract
+
+servers:
+  - url: http://localhost:8080/cmms/v1
+    description: Local development
+  - url: https://api.cmms.example.com/cmms/v1
+    description: Production (update with real URL before first release)
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: health
+    description: Liveness and readiness probe operations
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Returns the current health status of the CMMS API service. Used by load balancers and Kubernetes liveness probes.
+      operationId: getHealth
+      tags:
+        - health
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponseDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token obtained from Azure AD / Entra ID via OIDC
+
+  schemas:
+    # Common (always $ref to schemas/common.yaml)
+    ErrorResponseDto:
+      $ref: './schemas/common.yaml#/components/schemas/ErrorResponseDto'
+    PagedResponseDto:
+      $ref: './schemas/common.yaml#/components/schemas/PagedResponseDto'
+    AuditInfoDto:
+      $ref: './schemas/common.yaml#/components/schemas/AuditInfoDto'
+
+    # Health — inline (1 schema, 2 properties)
+    HealthResponseDto:
+      type: object
+      description: Health check response indicating service status and version
+      required:
+        - status
+        - version
+      properties:
+        status:
+          type: string
+          description: Current health status of the service
+          example: "UP"
+          enum:
+            - UP
+            - DOWN
+            - DEGRADED
+        version:
+          type: string
+          description: Current deployed version of the CMMS API
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+          description: UTC timestamp of the health check response
+          example: "2026-06-10T20:00:00Z"

@@ -1,0 +1,98 @@
+components:
+  schemas:
+
+    ErrorResponseDto:
+      type: object
+      description: Standard error response for all 4xx and 5xx responses
+      required:
+        - code
+        - message
+        - timestamp
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code in UPPER_SNAKE_CASE
+          example: "RESOURCE_NOT_FOUND"
+        message:
+          type: string
+          description: Human-readable description of the error
+          example: "The requested resource was not found"
+        timestamp:
+          type: string
+          format: date-time
+          description: UTC timestamp when the error occurred
+          example: "2026-01-15T10:30:00Z"
+        details:
+          type: array
+          description: Field-level validation messages (present on 400 validation errors only)
+          items:
+            type: string
+          example:
+            - "email: must be a valid email address"
+            - "firstName: must not be blank"
+
+    PagedResponseDto:
+      type: object
+      description: Generic paginated list wrapper — used for all collection endpoints
+      required:
+        - content
+        - totalElements
+        - totalPages
+        - number
+        - size
+      properties:
+        content:
+          type: array
+          description: Items on this page
+          items: {}
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of elements across all pages
+          example: 100
+        totalPages:
+          type: integer
+          description: Total number of pages
+          example: 5
+        number:
+          type: integer
+          description: Current page number (zero-based)
+          example: 0
+        size:
+          type: integer
+          description: Number of elements per page
+          example: 20
+        first:
+          type: boolean
+          description: Whether this is the first page
+          example: true
+        last:
+          type: boolean
+          description: Whether this is the last page
+          example: false
+
+    AuditInfoDto:
+      type: object
+      description: Audit metadata — include in any resource that tracks creation and modification
+      required:
+        - createdAt
+        - updatedAt
+      properties:
+        createdAt:
+          type: string
+          format: date-time
+          description: UTC timestamp when the resource was created
+          example: "2026-01-15T10:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: UTC timestamp of the last modification
+          example: "2026-01-15T12:30:00Z"
+        createdBy:
+          type: string
+          description: ID of the user who created this resource
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        updatedBy:
+          type: string
+          description: ID of the user who last modified this resource
+          example: "550e8400-e29b-41d4-a716-446655440001"

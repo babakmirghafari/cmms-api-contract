@@ -1,0 +1,25 @@
+name: PR Validation
+
+on:
+  pull_request:
+    paths:
+      - 'src/main/resources/openapi/**'
+
+jobs:
+  validate-spec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate OpenAPI Spec
+        uses: char0n/swagger-editor-validate@v1
+        with:
+          definition-file: src/main/resources/openapi/api.yaml
+
+      - name: Check for breaking changes
+        uses: oasdiff/oasdiff-action/breaking@main
+        with:
+          base: origin/main:src/main/resources/openapi/api.yaml
+          revision: src/main/resources/openapi/api.yaml
