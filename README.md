@@ -294,5 +294,5 @@ Both jobs run in parallel. Both must be green before downstream scaffolds procee
 
 | Type  | Coordinate                                   | Registry URL                                                                 |
 |-------|----------------------------------------------|------------------------------------------------------------------------------|
-| Maven | `com.cmms:cmms-api-contract:1.0.0`           | https://maven.pkg.github.com/babakmirghafari/cmms-api-contract               |
-| npm   | `@babakmirghafari/cmms-api-client@1.0.0`     | https://github.com/babakmirghafari/cmms-api-contract/packages                |
+| Maven | `com.cmms:cmms-api-contract:1.0.1`           | https://maven.pkg.github.com/babakmirghafari/cmms-api-contract               |
+| npm   | `@babakmirghafari/cmms-api-client@1.0.1`     | https://github.com/babakmirghafari/cmms-api-contract/packages                |
