@@ -8,7 +8,7 @@ info:
     This specification is the single source of truth for all API interfaces.
     Server stubs (Spring Boot) and client code (Angular) are generated from it.
     Do not write HTTP glue code by hand — regenerate from this spec.
-  version: 1.0.0
+  version: 1.1.0
   contact:
     name: CMMS Team
     url: https://github.com/babakmirghafari/cmms-api-contract
@@ -25,6 +25,8 @@ security:
 tags:
   - name: health
     description: Liveness and readiness probe operations
+  - name: dashboard
+    description: Operations Dashboard — KPIs, trend charts, fleet health, and activity feeds
 
 paths:
   /health:
@@ -61,6 +63,306 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDto'
 
+  /dashboard/kpis:
+    get:
+      summary: Get dashboard KPIs
+      description: Returns the four top-level KPI values shown in the Operations Dashboard header row — open work orders, PM compliance, asset availability, and active alarms.
+      operationId: getDashboardKpis
+      tags:
+        - dashboard
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          description: Filter KPIs by site ID. When omitted, returns aggregate across all sites.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Dashboard KPIs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardKpisDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /dashboard/availability-trend:
+    get:
+      summary: Get asset availability 7-day trend
+      description: Returns daily asset availability percentages for the past 7 days, used to render the line chart on the Operations Dashboard.
+      operationId: getDashboardAvailabilityTrend
+      tags:
+        - dashboard
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          description: Filter by site ID. When omitted, returns aggregate across all sites.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Availability trend data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityTrendDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /dashboard/fleet-health:
+    get:
+      summary: Get fleet health gauge data
+      description: Returns the weighted fleet health index and per-status asset counts (operational / degraded / down) for the gauge widget on the Operations Dashboard.
+      operationId: getDashboardFleetHealth
+      tags:
+        - dashboard
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          description: Filter by site ID. When omitted, returns aggregate across all sites.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Fleet health data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FleetHealthDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /dashboard/wo-backlog:
+    get:
+      summary: Get work-order backlog by status
+      description: Returns the work-order backlog breakdown by status (Open, Assigned, In Progress, Waiting, Completed) for the bar chart on the Operations Dashboard.
+      operationId: getDashboardWoBacklog
+      tags:
+        - dashboard
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          description: Filter by site ID. When omitted, returns aggregate across all sites.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: WO backlog breakdown retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WoBacklogDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /dashboard/wo-by-type:
+    get:
+      summary: Get work orders by type
+      description: Returns the current-month work-order counts grouped by type (Preventive, Corrective, Predictive, Inspection) for the donut chart on the Operations Dashboard.
+      operationId: getDashboardWoByType
+      tags:
+        - dashboard
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          description: Filter by site ID. When omitted, returns aggregate across all sites.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Work-orders-by-type data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WoByTypeDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /dashboard/alarms:
+    get:
+      summary: Get active predictive alarms
+      description: Returns the list of active predictive anomaly alarms for the Active Alarms widget on the Operations Dashboard. Results are ordered by severity (high first) then detected timestamp descending.
+      operationId: getDashboardAlarms
+      tags:
+        - dashboard
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          description: Filter by site ID. When omitted, returns alarms across all sites.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Active alarms retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnomalyDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /dashboard/activity:
+    get:
+      summary: Get recent activity feed
+      description: Returns the most recent audit log entries for the Recent Activity widget on the Operations Dashboard. Returns the latest 5 entries by default.
+      operationId: getDashboardActivity
+      tags:
+        - dashboard
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          description: Filter by site ID. When omitted, returns activity across all sites.
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of entries to return. Defaults to 5.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 5
+      responses:
+        '200':
+          description: Recent activity feed retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLogEntryDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -77,6 +379,28 @@ components:
       $ref: './schemas/common.yaml#/components/schemas/PagedResponseDto'
     AuditInfoDto:
       $ref: './schemas/common.yaml#/components/schemas/AuditInfoDto'
+
+    # Dashboard ($ref to schemas/dashboard.yaml)
+    DashboardKpisDto:
+      $ref: './schemas/dashboard.yaml#/components/schemas/DashboardKpisDto'
+    AvailabilityTrendPointDto:
+      $ref: './schemas/dashboard.yaml#/components/schemas/AvailabilityTrendPointDto'
+    AvailabilityTrendDto:
+      $ref: './schemas/dashboard.yaml#/components/schemas/AvailabilityTrendDto'
+    FleetHealthDto:
+      $ref: './schemas/dashboard.yaml#/components/schemas/FleetHealthDto'
+    WoBacklogSegmentDto:
+      $ref: './schemas/dashboard.yaml#/components/schemas/WoBacklogSegmentDto'
+    WoBacklogDto:
+      $ref: './schemas/dashboard.yaml#/components/schemas/WoBacklogDto'
+    WoByTypeSegmentDto:
+      $ref: './schemas/dashboard.yaml#/components/schemas/WoByTypeSegmentDto'
+    WoByTypeDto:
+      $ref: './schemas/dashboard.yaml#/components/schemas/WoByTypeDto'
+    AnomalyDto:
+      $ref: './schemas/dashboard.yaml#/components/schemas/AnomalyDto'
+    AuditLogEntryDto:
+      $ref: './schemas/dashboard.yaml#/components/schemas/AuditLogEntryDto'
 
     # Health — inline (1 schema, 2 properties)
     HealthResponseDto:

@@ -1,0 +1,237 @@
+components:
+  schemas:
+
+    DashboardKpisDto:
+      type: object
+      description: Top-level KPI summary for the Operations Dashboard header row
+      required:
+        - openWorkOrders
+        - pmCompliance
+        - availability
+        - activeAlarms
+      properties:
+        openWorkOrders:
+          type: integer
+          description: Total number of open (non-closed) work orders
+          example: 112
+        pmCompliance:
+          type: number
+          format: float
+          description: Preventive maintenance compliance as a percentage (0–100)
+          example: 94.2
+        availability:
+          type: number
+          format: float
+          description: Overall asset availability as a percentage (0–100)
+          example: 97.4
+        activeAlarms:
+          type: integer
+          description: Number of currently active predictive anomaly alarms
+          example: 3
+
+    AvailabilityTrendPointDto:
+      type: object
+      description: A single data point in the 7-day availability trend chart
+      required:
+        - label
+        - value
+      properties:
+        label:
+          type: string
+          description: Day label shown on the X-axis (e.g. Mon, Tue)
+          example: "Mon"
+        value:
+          type: number
+          format: float
+          description: Availability percentage for this day (0–100)
+          example: 96.1
+
+    AvailabilityTrendDto:
+      type: object
+      description: 7-day asset availability trend data for the line chart
+      required:
+        - days
+      properties:
+        days:
+          type: array
+          description: Ordered list of daily availability data points (chronological, oldest first)
+          items:
+            $ref: '#/components/schemas/AvailabilityTrendPointDto'
+
+    FleetHealthDto:
+      type: object
+      description: Fleet health gauge data — weighted health index plus per-status asset counts
+      required:
+        - score
+        - operational
+        - degraded
+        - down
+      properties:
+        score:
+          type: number
+          format: float
+          description: Weighted fleet health index (0–100)
+          example: 87.5
+        operational:
+          type: integer
+          description: Number of assets currently operational
+          example: 9
+        degraded:
+          type: integer
+          description: Number of assets in a degraded state
+          example: 2
+        down:
+          type: integer
+          description: Number of assets that are currently down
+          example: 1
+
+    WoBacklogSegmentDto:
+      type: object
+      description: A single status segment in the work-order backlog bar chart
+      required:
+        - label
+        - value
+        - color
+      properties:
+        label:
+          type: string
+          description: Status label (e.g. Open, Assigned, In Progress, Waiting, Completed)
+          example: "Open"
+        value:
+          type: integer
+          description: Number of work orders in this status
+          example: 34
+        color:
+          type: string
+          description: CSS/hex color code used to render this segment
+          example: "#6366f1"
+
+    WoBacklogDto:
+      type: object
+      description: Work-order backlog breakdown by status for the bar chart
+      required:
+        - segments
+      properties:
+        segments:
+          type: array
+          description: Status segments ordered as shown in the UI
+          items:
+            $ref: '#/components/schemas/WoBacklogSegmentDto'
+
+    WoByTypeSegmentDto:
+      type: object
+      description: A single type slice in the work-orders-by-type donut chart
+      required:
+        - label
+        - value
+      properties:
+        label:
+          type: string
+          description: Work order type label (e.g. Preventive, Corrective, Predictive, Inspection)
+          example: "Preventive"
+        value:
+          type: integer
+          description: Number of work orders of this type in the current month
+          example: 148
+
+    WoByTypeDto:
+      type: object
+      description: Work-orders-by-type donut chart data for the current month
+      required:
+        - segments
+        - total
+      properties:
+        segments:
+          type: array
+          description: Type slices ordered as shown in the UI
+          items:
+            $ref: '#/components/schemas/WoByTypeSegmentDto'
+        total:
+          type: integer
+          description: Sum of all segment values (center label on donut)
+          example: 330
+
+    AnomalyDto:
+      type: object
+      description: A predictive anomaly alarm entry shown in the Active Alarms list
+      required:
+        - id
+        - assetId
+        - assetName
+        - signal
+        - confidence
+        - rul
+        - severity
+        - detected
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for this anomaly record
+          example: "550e8400-e29b-41d4-a716-446655440010"
+        assetId:
+          type: string
+          format: uuid
+          description: ID of the asset where the anomaly was detected
+          example: "550e8400-e29b-41d4-a716-446655440011"
+        assetName:
+          type: string
+          description: Human-readable asset name
+          example: "Pump P-101"
+        signal:
+          type: string
+          description: Sensor signal or pattern that triggered the anomaly
+          example: "Vibration spike"
+        confidence:
+          type: integer
+          description: Model confidence score for this anomaly (0–100)
+          example: 92
+        rul:
+          type: string
+          description: Estimated remaining useful life (formatted string, e.g. "14 days")
+          example: "14 days"
+        severity:
+          type: string
+          description: Anomaly severity level
+          enum:
+            - high
+            - medium
+            - low
+          example: "high"
+        detected:
+          type: string
+          format: date-time
+          description: UTC timestamp when the anomaly was first detected
+          example: "2026-06-10T14:23:00Z"
+
+    AuditLogEntryDto:
+      type: object
+      description: A single audit log entry shown in the Recent Activity feed
+      required:
+        - ts
+        - user
+        - role
+        - action
+        - module
+      properties:
+        ts:
+          type: string
+          format: date-time
+          description: UTC timestamp of the activity
+          example: "2026-06-10T14:55:00Z"
+        user:
+          type: string
+          description: Display name of the user who performed the action
+          example: "Jane Smith"
+        role:
+          type: string
+          description: Role of the user at the time of the action
+          example: "Maintenance Supervisor"
+        action:
+          type: string
+          description: Human-readable description of the action performed
+          example: "Closed Work Order WO-2031"
+        module:
+          type: string
+          description: Application module where the action occurred
+          example: "Work Orders"
