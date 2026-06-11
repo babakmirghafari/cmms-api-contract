@@ -1,0 +1,446 @@
+components:
+  schemas:
+
+    WorkOrderStatus:
+      type: string
+      description: Work order lifecycle status
+      enum:
+        - Draft
+        - Open
+        - Assigned
+        - In Progress
+        - Waiting for Parts
+        - Waiting for Approval
+        - Completed
+        - Closed
+
+    WorkOrderType:
+      type: string
+      description: Category of maintenance work
+      enum:
+        - Corrective
+        - Preventive
+        - Predictive
+        - Inspection
+
+    WorkOrderPriority:
+      type: string
+      description: Urgency classification
+      enum:
+        - Low
+        - Medium
+        - High
+        - Critical
+
+    TaskItemType:
+      type: string
+      description: Checklist task input type
+      enum:
+        - checkbox
+        - passfail
+        - numeric
+        - choice
+        - text
+        - photo
+        - signature
+
+    ChecklistTaskItemDto:
+      type: object
+      description: A single task item within an instantiated WO checklist
+      required:
+        - idx
+        - taskId
+        - name
+        - type
+        - required
+      properties:
+        idx:
+          type: integer
+          description: Zero-based position index within the checklist
+        taskId:
+          type: string
+          description: Reference to the source TaskDefinition
+          example: "TSK-03"
+        name:
+          type: string
+          description: Task label
+          example: "Measure bearing temperature"
+        type:
+          $ref: '#/components/schemas/TaskItemType'
+        required:
+          type: boolean
+          description: Whether this task must be completed before WO advance
+        safety:
+          type: boolean
+          description: Safety-critical flag
+        instruction:
+          type: string
+          description: How-to guidance text
+        unit:
+          type: string
+          description: Unit of measurement (for numeric tasks)
+          example: "°C"
+        min:
+          type: number
+          format: double
+          description: Minimum acceptable value (for numeric tasks)
+        max:
+          type: number
+          format: double
+          description: Maximum acceptable value (for numeric tasks)
+        expected:
+          type: string
+          description: Expected result (for passfail / choice tasks)
+        options:
+          type: array
+          description: Allowed options (for choice tasks)
+          items:
+            type: string
+        result:
+          type: string
+          description: Recorded result value (string, pass/fail, number, or boolean as string)
+        resultBy:
+          type: string
+          description: Name of the technician who recorded the result
+        resultAt:
+          type: string
+          format: date-time
+          description: Timestamp when result was recorded
+        pass:
+          type: boolean
+          description: Whether the recorded result meets the acceptance criterion
+
+    ChecklistSummaryDto:
+      type: object
+      description: Acceptance checklist bound to a work order
+      properties:
+        id:
+          type: string
+          description: Checklist template ID
+          example: "CL-001"
+        name:
+          type: string
+          description: Checklist template name
+          example: "Hydraulic Press Overhaul"
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChecklistTaskItemDto'
+        totalItems:
+          type: integer
+          description: Total number of checklist items
+        completedItems:
+          type: integer
+          description: Number of items with a recorded result
+        requiredItems:
+          type: integer
+          description: Number of required items
+        requiredCompleted:
+          type: integer
+          description: Number of required items completed
+        passedItems:
+          type: integer
+          description: Number of items that passed their criterion
+        failedItems:
+          type: integer
+          description: Number of items that failed their criterion
+        acceptanceMet:
+          type: boolean
+          description: True when all required items are complete and pass
+
+    WoCommentDto:
+      type: object
+      description: A comment on a work order
+      required:
+        - by
+        - text
+        - time
+      properties:
+        by:
+          type: string
+          description: Author display name
+          example: "Lukas Bauer"
+        text:
+          type: string
+          description: Comment text
+        time:
+          type: string
+          description: Human-readable timestamp (YYYY-MM-DD HH:mm)
+          example: "2026-06-10 09:31"
+
+    WoCommentCreateRequest:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Comment body text
+
+    TimelineEventDto:
+      type: object
+      description: An immutable audit event in a work order's history
+      required:
+        - id
+        - type
+        - by
+        - at
+        - message
+      properties:
+        id:
+          type: string
+          description: Unique event identifier
+        type:
+          type: string
+          description: Event type
+          enum:
+            - created
+            - status-changed
+            - assigned
+            - comment-added
+            - checklist-attached
+            - checklist-item-updated
+            - advanced
+        by:
+          type: string
+          description: Actor display name
+          example: "Lukas Bauer"
+        at:
+          type: string
+          format: date-time
+          description: Timestamp of the event
+        message:
+          type: string
+          description: Human-readable description of the event
+          example: "Status changed from Open to Assigned"
+        meta:
+          type: object
+          additionalProperties: true
+          description: Optional structured metadata (fromStatus, toStatus, etc.)
+
+    WorkOrderDto:
+      type: object
+      description: Full work order record
+      required:
+        - id
+        - title
+        - status
+        - type
+        - priority
+        - created
+        - auto
+      properties:
+        id:
+          type: string
+          description: Human-readable WO identifier
+          example: "WO-1001"
+        title:
+          type: string
+          description: Brief description of the work
+          example: "Hydraulic pump bearing replacement"
+        description:
+          type: string
+          description: Detailed description of the task
+        status:
+          $ref: '#/components/schemas/WorkOrderStatus'
+        type:
+          $ref: '#/components/schemas/WorkOrderType'
+        priority:
+          $ref: '#/components/schemas/WorkOrderPriority'
+        assetId:
+          type: string
+          format: uuid
+          description: UUID of the asset this WO is for
+        assetName:
+          type: string
+          description: Cached asset name for display
+          example: "Hydraulic Press P-03"
+        assetTag:
+          type: string
+          description: Human-readable asset tag
+          example: "AST-001"
+        siteId:
+          type: string
+          format: uuid
+          description: UUID of the site
+        site:
+          type: string
+          description: Site name for display
+          example: "Munich Plant"
+        assignee:
+          type: string
+          description: Assigned technician display name
+          example: "Lukas Bauer"
+        assigneeId:
+          type: string
+          format: uuid
+          description: Assigned technician user ID
+        created:
+          type: string
+          format: date
+          description: Date WO was created
+          example: "2026-06-01"
+        due:
+          type: string
+          format: date
+          description: Due date
+          example: "2026-06-15"
+        estimatedDuration:
+          type: string
+          description: Estimated duration (free-text)
+          example: "4h"
+        failureMode:
+          type: string
+          description: Failure mode label if applicable
+        auto:
+          type: boolean
+          description: Whether WO was auto-created (e.g. by IoT rule or PM schedule)
+        progress:
+          type: integer
+          description: Completion percentage (0–100)
+          minimum: 0
+          maximum: 100
+        checklistId:
+          type: string
+          description: ID of the attached checklist template
+        checklist:
+          $ref: '#/components/schemas/ChecklistSummaryDto'
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/WoCommentDto'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    WorkOrderPageDto:
+      type: object
+      description: Paginated list of work orders
+      required:
+        - content
+        - totalElements
+        - totalPages
+        - number
+        - size
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkOrderDto'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        number:
+          type: integer
+          description: Zero-based current page number
+        size:
+          type: integer
+
+    WorkOrderCreateRequest:
+      type: object
+      description: Payload to create a new work order
+      required:
+        - title
+        - type
+        - priority
+      properties:
+        title:
+          type: string
+          description: Brief title for the WO
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/WorkOrderType'
+        priority:
+          $ref: '#/components/schemas/WorkOrderPriority'
+        status:
+          $ref: '#/components/schemas/WorkOrderStatus'
+        assetId:
+          type: string
+          format: uuid
+        siteId:
+          type: string
+          format: uuid
+        assigneeId:
+          type: string
+          format: uuid
+        due:
+          type: string
+          format: date
+        estimatedDuration:
+          type: string
+        failureMode:
+          type: string
+        checklistId:
+          type: string
+          description: Checklist template to attach immediately
+
+    WorkOrderUpdateRequest:
+      type: object
+      description: Payload to update an existing work order
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/WorkOrderType'
+        priority:
+          $ref: '#/components/schemas/WorkOrderPriority'
+        status:
+          $ref: '#/components/schemas/WorkOrderStatus'
+        assigneeId:
+          type: string
+          format: uuid
+        due:
+          type: string
+          format: date
+        estimatedDuration:
+          type: string
+        failureMode:
+          type: string
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    AdvanceStatusRequest:
+      type: object
+      description: Request to advance a WO to its next lifecycle status
+      properties:
+        note:
+          type: string
+          description: Optional note to record in the timeline
+
+    AttachChecklistRequest:
+      type: object
+      description: Attach a checklist template to a work order
+      required:
+        - checklistId
+      properties:
+        checklistId:
+          type: string
+          description: ID of the ChecklistTemplate to attach
+
+    ChecklistItemPatchRequest:
+      type: object
+      description: Record a result for a single checklist task item
+      required:
+        - result
+        - by
+      properties:
+        result:
+          type: string
+          description: Recorded result value (string, 'true'/'false' for checkbox, number as string for numeric)
+        by:
+          type: string
+          description: Name of the person recording the result
+        resultAt:
+          type: string
+          format: date-time
+          description: Timestamp of the recording (defaults to now if omitted)
