@@ -1,0 +1,451 @@
+components:
+  schemas:
+
+    AssetDto:
+      type: object
+      description: Full asset record with all 21 attributes from the ISO 14224 asset register
+      required:
+        - id
+        - name
+        - type
+        - criticality
+        - status
+      properties:
+        id:
+          type: string
+          description: Asset identifier (monospace, e.g. AST-001)
+          example: "AST-001"
+        name:
+          type: string
+          description: Human-readable asset name
+          example: "Hydraulic Press P-03"
+        type:
+          type: string
+          description: Asset type / equipment class
+          example: "Hydraulic Press"
+        criticality:
+          type: string
+          description: Asset criticality level
+          enum:
+            - Critical
+            - High
+            - Medium
+            - Low
+          example: "Critical"
+        status:
+          type: string
+          description: Current operational status
+          enum:
+            - Operational
+            - Degraded
+            - Maintenance
+            - Down
+          example: "Operational"
+        health:
+          type: integer
+          description: Asset health score 0–100
+          minimum: 0
+          maximum: 100
+          example: 92
+        risk:
+          type: integer
+          description: Risk score 0–100
+          minimum: 0
+          maximum: 100
+          example: 35
+        runtime:
+          type: string
+          description: Accumulated runtime (human-readable)
+          example: "4 820 h"
+        value:
+          type: string
+          description: Replacement value (formatted currency string)
+          example: "€ 85 000"
+        parent:
+          type: string
+          description: Parent asset ID, or "—" if top-level
+          example: "AST-000"
+        mfr:
+          type: string
+          description: Manufacturer name
+          example: "Bosch Rexroth"
+        model:
+          type: string
+          description: Model number / designation
+          example: "HLP-3200"
+        serial:
+          type: string
+          description: Serial number
+          example: "SN-20240018"
+        install:
+          type: string
+          format: date
+          description: Installation date (ISO 8601)
+          example: "2021-03-15"
+        site:
+          type: string
+          description: Site name the asset belongs to
+          example: "Stuttgart Plant"
+        area:
+          type: string
+          description: Area within the site
+          example: "Production Hall A"
+        system:
+          type: string
+          description: System / process unit
+          example: "Hydraulics"
+        siteId:
+          type: string
+          format: uuid
+          description: UUID of the owning site
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        parentId:
+          type: string
+          format: uuid
+          description: UUID of the parent asset (null if root)
+          example: null
+        hierarchyPath:
+          type: string
+          description: Full dot-separated hierarchy path for display
+          example: "Nordwerk Industries > Germany > Stuttgart Plant > Production Hall A > Hydraulics > Hydraulic Press P-03"
+        audit:
+          $ref: '../../openapi/schemas/common.yaml#/components/schemas/AuditInfoDto'
+
+    AssetCreateRequest:
+      type: object
+      description: Payload for creating a new asset
+      required:
+        - name
+        - type
+        - criticality
+        - status
+        - siteId
+      properties:
+        name:
+          type: string
+          example: "Compressor C-07"
+        type:
+          type: string
+          example: "Compressor"
+        criticality:
+          type: string
+          enum:
+            - Critical
+            - High
+            - Medium
+            - Low
+          example: "High"
+        status:
+          type: string
+          enum:
+            - Operational
+            - Degraded
+            - Maintenance
+            - Down
+          example: "Operational"
+        mfr:
+          type: string
+          example: "Atlas Copco"
+        model:
+          type: string
+          example: "GA 55"
+        serial:
+          type: string
+          example: "SN-20250042"
+        install:
+          type: string
+          format: date
+          example: "2025-01-10"
+        siteId:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        area:
+          type: string
+          example: "Utilities"
+        system:
+          type: string
+          example: "Compressed Air"
+        parentId:
+          type: string
+          format: uuid
+          example: null
+        risk:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 20
+
+    AssetUpdateRequest:
+      type: object
+      description: Payload for updating an existing asset (partial — only provided fields are changed)
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        criticality:
+          type: string
+          enum:
+            - Critical
+            - High
+            - Medium
+            - Low
+        status:
+          type: string
+          enum:
+            - Operational
+            - Degraded
+            - Maintenance
+            - Down
+        mfr:
+          type: string
+        model:
+          type: string
+        serial:
+          type: string
+        install:
+          type: string
+          format: date
+        area:
+          type: string
+        system:
+          type: string
+        risk:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    HierarchyNodeDto:
+      type: object
+      description: Recursive tree node for the ISO 14224 Site > Area > System > Equipment > Component hierarchy
+      required:
+        - id
+        - label
+        - type
+      properties:
+        id:
+          type: string
+          description: Node identifier (asset ID or generated site/area/system id)
+          example: "AST-001"
+        label:
+          type: string
+          description: Display label for the node
+          example: "Hydraulic Press P-03"
+        tag:
+          type: string
+          description: Short tag / code for the node
+          example: "HLP-3200"
+        type:
+          type: string
+          description: Node type in the ISO 14224 hierarchy
+          enum:
+            - Site
+            - Area
+            - System
+            - Equipment
+            - Component
+          example: "Equipment"
+        criticality:
+          type: string
+          description: Criticality level (Equipment and Component nodes only)
+          enum:
+            - Critical
+            - High
+            - Medium
+            - Low
+          example: "Critical"
+        health:
+          type: integer
+          description: Health percentage for this node
+          minimum: 0
+          maximum: 100
+          example: 87
+        children:
+          type: array
+          description: Child nodes (empty array if leaf)
+          items:
+            $ref: '#/components/schemas/HierarchyNodeDto'
+
+    AssetKpisDto:
+      type: object
+      description: Reliability KPIs for a single asset
+      required:
+        - mtbf
+        - mttr
+        - availability
+        - failuresYtd
+      properties:
+        mtbf:
+          type: string
+          description: Mean Time Between Failures (human-readable, hours)
+          example: "312 h"
+        mttr:
+          type: string
+          description: Mean Time To Repair (human-readable, hours)
+          example: "5.1 h"
+        availability:
+          type: string
+          description: Asset availability percentage (formatted)
+          example: "96.2%"
+        failuresYtd:
+          type: integer
+          description: Number of recorded failures year-to-date
+          example: 7
+
+    AssetPageDto:
+      type: object
+      description: Paginated list of assets
+      required:
+        - content
+        - totalElements
+        - totalPages
+        - number
+        - size
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetDto'
+        totalElements:
+          type: integer
+          format: int64
+          example: 120
+        totalPages:
+          type: integer
+          example: 6
+        number:
+          type: integer
+          description: Current page (zero-based)
+          example: 0
+        size:
+          type: integer
+          example: 20
+        first:
+          type: boolean
+          example: true
+        last:
+          type: boolean
+          example: false
+
+    AssetWorkOrderDto:
+      type: object
+      description: Summary work-order record used in asset maintenance history tab
+      required:
+        - id
+        - type
+        - status
+        - due
+      properties:
+        id:
+          type: string
+          example: "WO-0042"
+        type:
+          type: string
+          example: "Preventive"
+        status:
+          type: string
+          example: "Open"
+        due:
+          type: string
+          format: date
+          example: "2026-06-20"
+        priority:
+          type: string
+          example: "High"
+        assignee:
+          type: string
+          example: "T. Becker"
+
+    AssetFailureDto:
+      type: object
+      description: Failure event record linked to an asset
+      required:
+        - id
+        - mode
+        - class
+        - cause
+      properties:
+        id:
+          type: string
+          example: "FAIL-0011"
+        mode:
+          type: string
+          description: Failure mode description
+          example: "Seal Leak"
+        class:
+          type: string
+          description: Failure classification
+          example: "Critical"
+        cause:
+          type: string
+          description: Root cause
+          example: "Fatigue"
+        detection:
+          type: string
+          description: Detection method
+          example: "Vibration sensor"
+        action:
+          type: string
+          description: Corrective action taken
+          example: "Seal replaced"
+        downtime:
+          type: string
+          description: Total downtime (human-readable)
+          example: "8 h"
+        cost:
+          type: string
+          description: Repair cost (formatted)
+          example: "€ 1 200"
+        occurredAt:
+          type: string
+          format: date-time
+          example: "2026-03-14T08:30:00Z"
+
+    AssetSensorDto:
+      type: object
+      description: Sensor attached to an asset
+      required:
+        - id
+        - param
+        - value
+        - unit
+        - status
+      properties:
+        id:
+          type: string
+          description: Sensor identifier
+          example: "SNS-V-001"
+        param:
+          type: string
+          description: Measured parameter name
+          example: "Vibration"
+        value:
+          type: number
+          format: double
+          description: Latest reading value
+          example: 4.2
+        unit:
+          type: string
+          description: Unit of measurement
+          example: "mm/s"
+        threshold:
+          type: number
+          format: double
+          description: Alarm threshold value
+          example: 7.5
+        status:
+          type: string
+          description: Current sensor alarm state
+          enum:
+            - ok
+            - warning
+            - alarm
+          example: "ok"
+        history:
+          type: array
+          description: Recent historical readings (for sparkline)
+          items:
+            type: number
+            format: double
+          example: [3.4, 3.6, 3.8, 3.9, 4.0, 4.2]

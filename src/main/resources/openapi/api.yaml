@@ -8,7 +8,7 @@ info:
     This specification is the single source of truth for all API interfaces.
     Server stubs (Spring Boot) and client code (Angular) are generated from it.
     Do not write HTTP glue code by hand — regenerate from this spec.
-  version: 1.1.0
+  version: 1.2.0
   contact:
     name: CMMS Team
     url: https://github.com/babakmirghafari/cmms-api-contract
@@ -27,6 +27,8 @@ tags:
     description: Liveness and readiness probe operations
   - name: dashboard
     description: Operations Dashboard — KPIs, trend charts, fleet health, and activity feeds
+  - name: assets
+    description: Asset register — ISO 14224 asset CRUD, hierarchy tree, KPIs, work-order history, failure history, and sensor readings
 
 paths:
   /health:
@@ -363,6 +365,510 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDto'
 
+  /assets:
+    get:
+      summary: List assets
+      description: Returns a paginated, filterable list of all assets in the register. Supports filtering by siteId, criticality, status, and free-text search (name, ID, manufacturer).
+      operationId: listAssets
+      tags:
+        - assets
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          description: Filter by site UUID
+          schema:
+            type: string
+            format: uuid
+        - name: criticality
+          in: query
+          required: false
+          description: Filter by criticality level
+          schema:
+            type: string
+            enum:
+              - Critical
+              - High
+              - Medium
+              - Low
+        - name: status
+          in: query
+          required: false
+          description: Filter by operational status
+          schema:
+            type: string
+            enum:
+              - Operational
+              - Degraded
+              - Maintenance
+              - Down
+        - name: q
+          in: query
+          required: false
+          description: Free-text search across name, ID, and manufacturer
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          description: Zero-based page number
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          required: false
+          description: Page size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 20
+        - name: sort
+          in: query
+          required: false
+          description: Sort expression, e.g. "name,asc" or "criticality,desc"
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated asset list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetPageDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      summary: Create asset
+      description: Creates a new asset in the register. Requires Asset Manager (E) or higher permission.
+      operationId: createAsset
+      tags:
+        - assets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetCreateRequest'
+      responses:
+        '201':
+          description: Asset created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetDto'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /assets/hierarchy:
+    get:
+      summary: Get asset hierarchy tree
+      description: Returns the full Site > Area > System > Equipment > Component hierarchy tree for a given site. The tree is recursive and can be rendered by HierarchyNode components.
+      operationId: getAssetsHierarchy
+      tags:
+        - assets
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          description: Filter hierarchy to a specific site. When omitted, returns the full organisation tree.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Hierarchy tree
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HierarchyNodeDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /assets/{id}:
+    get:
+      summary: Get asset detail
+      description: Returns full detail for a single asset including all 21 attributes.
+      operationId: getAssetById
+      tags:
+        - assets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Asset identifier (e.g. AST-001) or UUID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Asset found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    put:
+      summary: Update asset
+      description: Updates an existing asset. Only provided fields are changed. Requires Asset Manager (E) or higher.
+      operationId: updateAsset
+      tags:
+        - assets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetUpdateRequest'
+      responses:
+        '200':
+          description: Asset updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetDto'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      summary: Delete asset
+      description: Deletes an asset and removes it from the hierarchy. Requires Asset Manager (E) or higher.
+      operationId: deleteAsset
+      tags:
+        - assets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Asset deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /assets/{id}/work-orders:
+    get:
+      summary: Get work-order history for asset
+      description: Returns all work orders linked to the given asset, ordered by due date descending. Used in the Maintenance History tab of the Asset Detail Drawer.
+      operationId: getAssetWorkOrders
+      tags:
+        - assets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Work order history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssetWorkOrderDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /assets/{id}/failures:
+    get:
+      summary: Get failure history for asset
+      description: Returns all recorded failure events for the given asset, ordered by occurred timestamp descending. Used in the Failures tab of the Asset Detail Drawer.
+      operationId: getAssetFailures
+      tags:
+        - assets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Failure history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssetFailureDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /assets/{id}/sensors:
+    get:
+      summary: Get sensors attached to asset
+      description: Returns all IoT sensors attached to the given asset with their latest reading and alarm status. Used in the Sensors tab of the Asset Detail Drawer.
+      operationId: getAssetSensors
+      tags:
+        - assets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sensor list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssetSensorDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /assets/{id}/kpis:
+    get:
+      summary: Get reliability KPIs for asset
+      description: Returns MTBF, MTTR, Availability, and Failures YTD for the given asset. Used in the KPIs tab of the Asset Detail Drawer.
+      operationId: getAssetKpis
+      tags:
+        - assets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Asset KPIs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetKpisDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -401,6 +907,26 @@ components:
       $ref: './schemas/dashboard.yaml#/components/schemas/AnomalyDto'
     AuditLogEntryDto:
       $ref: './schemas/dashboard.yaml#/components/schemas/AuditLogEntryDto'
+
+    # Assets ($ref to schemas/assets.yaml)
+    AssetDto:
+      $ref: './schemas/assets.yaml#/components/schemas/AssetDto'
+    AssetCreateRequest:
+      $ref: './schemas/assets.yaml#/components/schemas/AssetCreateRequest'
+    AssetUpdateRequest:
+      $ref: './schemas/assets.yaml#/components/schemas/AssetUpdateRequest'
+    HierarchyNodeDto:
+      $ref: './schemas/assets.yaml#/components/schemas/HierarchyNodeDto'
+    AssetKpisDto:
+      $ref: './schemas/assets.yaml#/components/schemas/AssetKpisDto'
+    AssetPageDto:
+      $ref: './schemas/assets.yaml#/components/schemas/AssetPageDto'
+    AssetWorkOrderDto:
+      $ref: './schemas/assets.yaml#/components/schemas/AssetWorkOrderDto'
+    AssetFailureDto:
+      $ref: './schemas/assets.yaml#/components/schemas/AssetFailureDto'
+    AssetSensorDto:
+      $ref: './schemas/assets.yaml#/components/schemas/AssetSensorDto'
 
     # Health — inline (1 schema, 2 properties)
     HealthResponseDto:
