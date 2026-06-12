@@ -1,0 +1,253 @@
+components:
+  schemas:
+
+    # ── Task Definition ───────────────────────────────────────────────────────
+
+    TaskDefinitionType:
+      type: string
+      description: The input format / task type
+      enum:
+        - checkbox
+        - passfail
+        - numeric
+        - choice
+        - text
+        - photo
+        - signature
+
+    TaskDefinitionDto:
+      type: object
+      description: A reusable task definition in the task library
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          description: Human-readable identifier (e.g. TSK-0001)
+          example: "TSK-0001"
+        name:
+          type: string
+          description: Task name shown in checklists
+          example: "Check oil level"
+        type:
+          $ref: '#/components/schemas/TaskDefinitionType'
+        category:
+          type: string
+          description: Task category (Safety, Mechanical, Electrical, etc.)
+          example: "Mechanical"
+        instruction:
+          type: string
+          description: How to perform the task and what a passing result looks like
+          example: "Oil should be between MIN and MAX marks on dipstick"
+        unit:
+          type: string
+          description: Unit for numeric measurements
+          example: "°C"
+        min:
+          type: number
+          format: double
+          description: Minimum acceptable value (numeric tasks)
+          example: 60.0
+        max:
+          type: number
+          format: double
+          description: Maximum acceptable value (numeric tasks)
+          example: 90.0
+        expected:
+          type: string
+          description: Expected answer for pass/fail or choice tasks
+          example: "Pass"
+        options:
+          type: array
+          description: Available choices for choice-type tasks
+          items:
+            type: string
+          example: ["Low", "OK", "High"]
+        required:
+          type: boolean
+          description: Whether this task is required for checklist acceptance
+          example: true
+        safety:
+          type: boolean
+          description: Whether this is a safety-critical task
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    TaskDefinitionCreateRequest:
+      type: object
+      description: Request body to create a new task definition
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          example: "Measure bearing temperature"
+        type:
+          $ref: '#/components/schemas/TaskDefinitionType'
+        category:
+          type: string
+          example: "Mechanical"
+        instruction:
+          type: string
+          example: "Use contact thermometer; record reading"
+        unit:
+          type: string
+          example: "°C"
+        min:
+          type: number
+          format: double
+        max:
+          type: number
+          format: double
+        expected:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        required:
+          type: boolean
+          default: false
+        safety:
+          type: boolean
+          default: false
+
+    TaskDefinitionUpdateRequest:
+      type: object
+      description: Request body to update an existing task definition
+      properties:
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/TaskDefinitionType'
+        category:
+          type: string
+        instruction:
+          type: string
+        unit:
+          type: string
+        min:
+          type: number
+          format: double
+        max:
+          type: number
+          format: double
+        expected:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        required:
+          type: boolean
+        safety:
+          type: boolean
+
+    # ── Checklist Template ────────────────────────────────────────────────────
+
+    ChecklistTemplateCategory:
+      type: string
+      description: Category of a checklist template
+      enum:
+        - Preventive
+        - Corrective
+        - Predictive
+        - Inspection
+        - Safety
+
+    ChecklistTemplateDto:
+      type: object
+      description: A checklist template (ordered collection of task definitions)
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Human-readable identifier (e.g. CL-1001)
+          example: "CL-1001"
+        name:
+          type: string
+          description: Checklist template name
+          example: "Pump Annual Overhaul"
+        category:
+          $ref: '#/components/schemas/ChecklistTemplateCategory'
+        description:
+          type: string
+          description: What this checklist covers
+          example: "Full annual overhaul of centrifugal pumps"
+        taskIds:
+          type: array
+          description: Ordered list of task definition IDs included in this template
+          items:
+            type: string
+          example: ["TSK-0001", "TSK-0002", "TSK-0003"]
+        tasks:
+          type: array
+          description: Resolved task definitions (present in detail response)
+          items:
+            $ref: '#/components/schemas/TaskDefinitionDto'
+        taskCount:
+          type: integer
+          description: Total number of tasks
+          example: 5
+        requiredCount:
+          type: integer
+          description: Number of required tasks
+          example: 3
+        usedInCount:
+          type: integer
+          description: Number of work orders currently using this template
+          example: 2
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ChecklistTemplateCreateRequest:
+      type: object
+      description: Request body to create a checklist template
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "Pump Annual Overhaul"
+        category:
+          $ref: '#/components/schemas/ChecklistTemplateCategory'
+        description:
+          type: string
+        taskIds:
+          type: array
+          description: Ordered list of task definition IDs
+          items:
+            type: string
+          default: []
+
+    ChecklistTemplateUpdateRequest:
+      type: object
+      description: Request body to update a checklist template (can reorder taskIds)
+      properties:
+        name:
+          type: string
+        category:
+          $ref: '#/components/schemas/ChecklistTemplateCategory'
+        description:
+          type: string
+        taskIds:
+          type: array
+          description: New ordered list of task definition IDs
+          items:
+            type: string
