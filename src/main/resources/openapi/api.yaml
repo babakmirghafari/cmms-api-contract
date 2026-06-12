@@ -8,7 +8,7 @@ info:
     This specification is the single source of truth for all API interfaces.
     Server stubs (Spring Boot) and client code (Angular) are generated from it.
     Do not write HTTP glue code by hand — regenerate from this spec.
-  version: 1.8.0
+  version: 1.9.0
   contact:
     name: CMMS Team
     url: https://github.com/babakmirghafari/cmms-api-contract
@@ -2344,6 +2344,294 @@ paths:
               schema:
                 $ref: '#/components/schemas/PredictiveKpisDto'
 
+  # ═══════════════════════════════════════════════════════════════════════════
+  # IoT & Automation
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  /sensors:
+    get:
+      summary: List sensors
+      description: Returns all sensors, optionally filtered by asset, protocol, or status.
+      operationId: listSensors
+      tags:
+        - iot
+      parameters:
+        - name: assetId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter by asset ID
+        - name: protocol
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/SensorProtocol'
+          description: Filter by communication protocol
+        - name: enabled
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filter by enabled/disabled state
+      responses:
+        '200':
+          description: Sensor list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SensorDto'
+    post:
+      summary: Register a new sensor
+      description: Creates a new sensor record and attaches it to the specified asset.
+      operationId: createSensor
+      tags:
+        - iot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorCreateRequest'
+      responses:
+        '200':
+          description: Sensor created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorDto'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /sensors/{id}:
+    put:
+      summary: Update a sensor
+      description: Updates configuration for an existing sensor.
+      operationId: updateSensor
+      tags:
+        - iot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SensorUpdateRequest'
+      responses:
+        '200':
+          description: Sensor updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorDto'
+        '404':
+          description: Sensor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      summary: Delete a sensor
+      description: Removes a sensor and all associated reading history.
+      operationId: deleteSensor
+      tags:
+        - iot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Sensor deleted
+        '404':
+          description: Sensor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /sensors/stream:
+    get:
+      summary: Stream live sensor readings (SSE)
+      description: |
+        Server-Sent Events endpoint that streams SensorReadingEvent for every enabled sensor
+        approximately every 1.5 seconds. Clients connect once and receive a continuous stream.
+        ADR-004 — WebSocket SSE for Real-Time IoT Sensor Streaming.
+      operationId: streamSensorReadings
+      tags:
+        - iot
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Restrict stream to sensors attached to assets at this site
+      responses:
+        '200':
+          description: SSE stream of sensor reading events
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/SensorReadingEvent'
+
+  /automation-rules:
+    get:
+      summary: List automation rules
+      description: Returns all automation rules, optionally filtered by sensor or enabled state.
+      operationId: listAutomationRules
+      tags:
+        - iot
+      parameters:
+        - name: sensorId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter rules by sensor
+        - name: enabled
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filter by enabled/disabled state
+      responses:
+        '200':
+          description: Automation rule list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AutomationRuleDto'
+    post:
+      summary: Create an automation rule
+      description: Registers a new condition-based automation rule.
+      operationId: createAutomationRule
+      tags:
+        - iot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutomationRuleCreateRequest'
+      responses:
+        '200':
+          description: Automation rule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationRuleDto'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /automation-rules/{id}:
+    put:
+      summary: Update an automation rule
+      description: Updates an existing automation rule configuration.
+      operationId: updateAutomationRule
+      tags:
+        - iot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutomationRuleUpdateRequest'
+      responses:
+        '200':
+          description: Automation rule updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationRuleDto'
+        '404':
+          description: Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      summary: Delete an automation rule
+      description: Permanently removes an automation rule.
+      operationId: deleteAutomationRule
+      tags:
+        - iot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Rule deleted
+        '404':
+          description: Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /automation-rules/{id}/toggle:
+    post:
+      summary: Toggle an automation rule
+      description: Enables a disabled rule or disables an enabled rule.
+      operationId: toggleAutomationRule
+      tags:
+        - iot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Updated automation rule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationRuleDto'
+        '404':
+          description: Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -2452,6 +2740,24 @@ components:
       $ref: './schemas/preventive.yaml#/components/schemas/PmCalendarEventDto'
     PmKpisDto:
       $ref: './schemas/preventive.yaml#/components/schemas/PmKpisDto'
+
+    # IoT & Automation ($ref to schemas/iot.yaml)
+    SensorProtocol:
+      $ref: './schemas/iot.yaml#/components/schemas/SensorProtocol'
+    SensorDto:
+      $ref: './schemas/iot.yaml#/components/schemas/SensorDto'
+    SensorCreateRequest:
+      $ref: './schemas/iot.yaml#/components/schemas/SensorCreateRequest'
+    SensorUpdateRequest:
+      $ref: './schemas/iot.yaml#/components/schemas/SensorUpdateRequest'
+    SensorReadingEvent:
+      $ref: './schemas/iot.yaml#/components/schemas/SensorReadingEvent'
+    AutomationRuleDto:
+      $ref: './schemas/iot.yaml#/components/schemas/AutomationRuleDto'
+    AutomationRuleCreateRequest:
+      $ref: './schemas/iot.yaml#/components/schemas/AutomationRuleCreateRequest'
+    AutomationRuleUpdateRequest:
+      $ref: './schemas/iot.yaml#/components/schemas/AutomationRuleUpdateRequest'
 
     # Predictive ($ref to schemas/predictive.yaml)
     SensorStatus:
