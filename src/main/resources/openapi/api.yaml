@@ -8,7 +8,7 @@ info:
     This specification is the single source of truth for all API interfaces.
     Server stubs (Spring Boot) and client code (Angular) are generated from it.
     Do not write HTTP glue code by hand — regenerate from this spec.
-  version: 1.7.0
+  version: 1.8.0
   contact:
     name: CMMS Team
     url: https://github.com/babakmirghafari/cmms-api-contract
@@ -39,6 +39,8 @@ tags:
     description: Inspection rounds — operator rounds, condition inspections, area-based checkpoint schedules
   - name: preventive
     description: Preventive Maintenance — PM templates (5 trigger types), monthly calendar, WO generation, compliance KPIs
+  - name: predictive
+    description: Predictive Maintenance — AI anomaly detection, sensor trend charts, asset health scores, sensor readings table
 
 paths:
   /health:
@@ -2200,6 +2202,148 @@ paths:
               schema:
                 $ref: '#/components/schemas/PmKpisDto'
 
+  /predictive/anomalies:
+    get:
+      summary: List detected anomalies
+      description: Returns all open anomalies detected by the AI monitoring engine, optionally filtered by site and severity.
+      operationId: listAnomalies
+      tags:
+        - predictive
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: severity
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - low
+              - medium
+              - high
+              - critical
+      responses:
+        '200':
+          description: List of detected anomalies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnomalyDto'
+
+  /predictive/sensor-readings:
+    get:
+      summary: Live sensor readings snapshot
+      description: Returns the current reading snapshot for all sensors, optionally filtered by site.
+      operationId: listSensorReadings
+      tags:
+        - predictive
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Current sensor readings snapshot
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SensorReadingSnapshotDto'
+
+  /predictive/sensor-trend/{sensorId}:
+    get:
+      summary: Sensor trend history
+      description: Returns the last N readings for a single sensor, used to render trend line charts.
+      operationId: getSensorTrend
+      tags:
+        - predictive
+      parameters:
+        - name: sensorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: n
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 50
+          description: Number of readings to return (default 50)
+      responses:
+        '200':
+          description: Sensor trend data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorTrendDto'
+        '404':
+          description: Sensor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /predictive/asset-health/{assetId}:
+    get:
+      summary: Asset health summary
+      description: Returns the health score, failure probability, RUL, and recommended action for a specific asset.
+      operationId: getAssetHealth
+      tags:
+        - predictive
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Asset health data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetHealthDto'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /predictive/kpis:
+    get:
+      summary: Predictive maintenance KPIs
+      description: Returns dashboard KPIs — monitored assets, sensors online, open anomalies, average health score.
+      operationId: getPredictiveKpis
+      tags:
+        - predictive
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Predictive KPIs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictiveKpisDto'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -2308,6 +2452,20 @@ components:
       $ref: './schemas/preventive.yaml#/components/schemas/PmCalendarEventDto'
     PmKpisDto:
       $ref: './schemas/preventive.yaml#/components/schemas/PmKpisDto'
+
+    # Predictive ($ref to schemas/predictive.yaml)
+    SensorStatus:
+      $ref: './schemas/predictive.yaml#/components/schemas/SensorStatus'
+    SensorReadingSnapshotDto:
+      $ref: './schemas/predictive.yaml#/components/schemas/SensorReadingSnapshotDto'
+    SensorTrendDto:
+      $ref: './schemas/predictive.yaml#/components/schemas/SensorTrendDto'
+    SensorTrendPointDto:
+      $ref: './schemas/predictive.yaml#/components/schemas/SensorTrendPointDto'
+    AssetHealthDto:
+      $ref: './schemas/predictive.yaml#/components/schemas/AssetHealthDto'
+    PredictiveKpisDto:
+      $ref: './schemas/predictive.yaml#/components/schemas/PredictiveKpisDto'
 
     # Inspections ($ref to schemas/inspections.yaml)
     InspectionStatus:
