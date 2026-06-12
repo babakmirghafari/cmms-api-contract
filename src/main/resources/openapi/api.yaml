@@ -8,7 +8,7 @@ info:
     This specification is the single source of truth for all API interfaces.
     Server stubs (Spring Boot) and client code (Angular) are generated from it.
     Do not write HTTP glue code by hand — regenerate from this spec.
-  version: 1.4.1
+  version: 1.5.0
   contact:
     name: CMMS Team
     url: https://github.com/babakmirghafari/cmms-api-contract
@@ -33,6 +33,8 @@ tags:
     description: Asset lifecycle — usage meter readings (with PM auto-trigger) and ISO 55000 financial depreciation (Straight-Line, Declining Balance 200%, Units-of-Production)
   - name: work-orders
     description: Work order management — 5-step lifecycle, 6-tab detail drawer, Kanban board, acceptance checklists, timeline events, and comments
+  - name: checklists
+    description: Checklist management — task definition library (7 types) and checklist templates used as work order acceptance criteria
 
 paths:
   /health:
@@ -1541,6 +1543,317 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDto'
 
+  /task-definitions:
+    get:
+      summary: List task definitions
+      description: Returns the task definition library, filterable by type and category.
+      operationId: listTaskDefinitions
+      tags:
+        - checklists
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TaskDefinitionType'
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Free-text search on name and instruction
+      responses:
+        '200':
+          description: List of task definitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskDefinitionDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      summary: Create task definition
+      description: Adds a new task definition to the library.
+      operationId: createTaskDefinition
+      tags:
+        - checklists
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskDefinitionCreateRequest'
+      responses:
+        '200':
+          description: Task definition created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDefinitionDto'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /task-definitions/{id}:
+    put:
+      summary: Update task definition
+      description: Updates an existing task definition.
+      operationId: updateTaskDefinition
+      tags:
+        - checklists
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskDefinitionUpdateRequest'
+      responses:
+        '200':
+          description: Task definition updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDefinitionDto'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Task definition not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      summary: Delete task definition
+      description: Removes a task definition from the library.
+      operationId: deleteTaskDefinition
+      tags:
+        - checklists
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Task definition deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Task definition not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /checklists:
+    get:
+      summary: List checklist templates
+      description: Returns all checklist templates with summary stats.
+      operationId: listChecklistTemplates
+      tags:
+        - checklists
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ChecklistTemplateCategory'
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of checklist templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChecklistTemplateDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      summary: Create checklist template
+      description: Creates a new checklist template with an ordered list of task IDs.
+      operationId: createChecklistTemplate
+      tags:
+        - checklists
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChecklistTemplateCreateRequest'
+      responses:
+        '200':
+          description: Checklist template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistTemplateDto'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /checklists/{id}:
+    get:
+      summary: Get checklist template detail
+      description: Returns a checklist template with all task definitions resolved.
+      operationId: getChecklistTemplate
+      tags:
+        - checklists
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Checklist template detail with resolved tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistTemplateDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Checklist template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    put:
+      summary: Update checklist template
+      description: Updates a checklist template, including reordering tasks.
+      operationId: updateChecklistTemplate
+      tags:
+        - checklists
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChecklistTemplateUpdateRequest'
+      responses:
+        '200':
+          description: Checklist template updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistTemplateDto'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Checklist template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      summary: Delete checklist template
+      description: Removes a checklist template.
+      operationId: deleteChecklistTemplate
+      tags:
+        - checklists
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Checklist template deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Checklist template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1633,6 +1946,24 @@ components:
       $ref: './schemas/workorders.yaml#/components/schemas/AttachChecklistRequest'
     ChecklistItemPatchRequest:
       $ref: './schemas/workorders.yaml#/components/schemas/ChecklistItemPatchRequest'
+
+    # Checklists ($ref to schemas/checklists.yaml)
+    TaskDefinitionType:
+      $ref: './schemas/checklists.yaml#/components/schemas/TaskDefinitionType'
+    TaskDefinitionDto:
+      $ref: './schemas/checklists.yaml#/components/schemas/TaskDefinitionDto'
+    TaskDefinitionCreateRequest:
+      $ref: './schemas/checklists.yaml#/components/schemas/TaskDefinitionCreateRequest'
+    TaskDefinitionUpdateRequest:
+      $ref: './schemas/checklists.yaml#/components/schemas/TaskDefinitionUpdateRequest'
+    ChecklistTemplateCategory:
+      $ref: './schemas/checklists.yaml#/components/schemas/ChecklistTemplateCategory'
+    ChecklistTemplateDto:
+      $ref: './schemas/checklists.yaml#/components/schemas/ChecklistTemplateDto'
+    ChecklistTemplateCreateRequest:
+      $ref: './schemas/checklists.yaml#/components/schemas/ChecklistTemplateCreateRequest'
+    ChecklistTemplateUpdateRequest:
+      $ref: './schemas/checklists.yaml#/components/schemas/ChecklistTemplateUpdateRequest'
 
     # Lifecycle ($ref to schemas/lifecycle.yaml)
     AssetReadingDto:
