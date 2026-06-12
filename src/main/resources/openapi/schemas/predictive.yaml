@@ -1,0 +1,170 @@
+components:
+  schemas:
+
+    SensorStatus:
+      type: string
+      enum:
+        - normal
+        - warning
+        - alarm
+      description: Current operational status of a sensor reading
+
+    SensorReadingSnapshotDto:
+      type: object
+      required:
+        - sensorId
+        - param
+        - asset
+        - value
+        - unit
+        - status
+      properties:
+        sensorId:
+          type: string
+          example: SEN-K01-VIB
+        param:
+          type: string
+          description: Human-readable parameter name
+          example: Bearing vibration
+        asset:
+          type: string
+          description: Asset identifier the sensor belongs to
+          example: K-01
+        value:
+          type: number
+          format: double
+          example: 8.4
+        unit:
+          type: string
+          example: mm/s
+        threshold:
+          type: number
+          format: double
+          description: Alarm/warning threshold value
+          example: 7.1
+        status:
+          $ref: '#/components/schemas/SensorStatus'
+        sparkline:
+          type: array
+          description: Last 5 readings for sparkline rendering
+          items:
+            type: number
+            format: double
+        siteId:
+          type: string
+          format: uuid
+
+    SensorTrendDto:
+      type: object
+      required:
+        - sensorId
+        - readings
+      properties:
+        sensorId:
+          type: string
+          example: SEN-K01-VIB
+        param:
+          type: string
+          example: Bearing vibration
+        unit:
+          type: string
+          example: mm/s
+        threshold:
+          type: number
+          format: double
+          description: Alarm threshold for chart rendering
+          example: 7.1
+        thresholdLabel:
+          type: string
+          description: Human-readable threshold label
+          example: "Alarm 7.1"
+        readings:
+          type: array
+          description: Ordered list of sensor readings (oldest first)
+          items:
+            $ref: '#/components/schemas/SensorTrendPointDto'
+
+    SensorTrendPointDto:
+      type: object
+      required:
+        - timestamp
+        - value
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+          format: double
+
+    AssetHealthDto:
+      type: object
+      required:
+        - assetId
+        - healthScore
+        - failureProbability
+        - rul
+        - recommendation
+      properties:
+        assetId:
+          type: string
+          example: K-01
+        assetName:
+          type: string
+          example: Air Compressor K-01
+        healthScore:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+          description: Overall asset health score (0=failed, 100=perfect)
+          example: 58
+        failureProbability:
+          type: string
+          description: Human-readable failure probability label
+          example: High
+        failureProbabilityPct:
+          type: number
+          format: double
+          description: Numeric failure probability 0–100
+          example: 72.0
+        rul:
+          type: string
+          description: Estimated remaining useful life
+          example: "~18 days"
+        recommendation:
+          type: string
+          description: Recommended corrective action
+          example: "Replace bearings"
+
+    PredictiveKpisDto:
+      type: object
+      required:
+        - monitoredAssets
+        - sensorsOnline
+        - sensorsOnlinePercent
+        - openAnomalies
+        - avgHealthScore
+      properties:
+        monitoredAssets:
+          type: integer
+          format: int32
+          example: 48
+        sensorsOnline:
+          type: integer
+          format: int32
+          example: 312
+        sensorsOnlinePercent:
+          type: number
+          format: double
+          description: Percentage of sensors currently online
+          example: 98.4
+        openAnomalies:
+          type: integer
+          format: int32
+          example: 3
+        avgHealthScore:
+          type: number
+          format: double
+          description: Average health score across all monitored assets
+          example: 84.0
