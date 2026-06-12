@@ -1,0 +1,162 @@
+components:
+  schemas:
+
+    PmTrigger:
+      type: string
+      enum:
+        - Time-based
+        - Meter-based
+        - Runtime-based
+        - Usage-based
+        - Condition-based
+      description: Trigger type that drives PM schedule generation
+
+    PmTemplateDto:
+      type: object
+      required:
+        - id
+        - name
+        - trigger
+      properties:
+        id:
+          type: string
+          example: PM-CNV-M
+        name:
+          type: string
+          example: Conveyor — Monthly PM
+        trigger:
+          $ref: '#/components/schemas/PmTrigger'
+        freq:
+          type: string
+          example: Every 30 days
+        tasks:
+          type: integer
+          format: int32
+          example: 8
+        est:
+          type: string
+          example: 3h
+        assets:
+          type: integer
+          format: int32
+          example: 2
+        lastGen:
+          type: string
+          description: Date of last WO generation (ISO date or "—")
+          example: "2026-06-01"
+        siteId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PmTemplateCreateRequest:
+      type: object
+      required:
+        - name
+        - trigger
+      properties:
+        name:
+          type: string
+        trigger:
+          $ref: '#/components/schemas/PmTrigger'
+        freq:
+          type: string
+        tasks:
+          type: integer
+          format: int32
+        est:
+          type: string
+        assets:
+          type: integer
+          format: int32
+        siteId:
+          type: string
+          format: uuid
+
+    PmTemplateUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        trigger:
+          $ref: '#/components/schemas/PmTrigger'
+        freq:
+          type: string
+        tasks:
+          type: integer
+          format: int32
+        est:
+          type: string
+        assets:
+          type: integer
+          format: int32
+        siteId:
+          type: string
+          format: uuid
+
+    PmGenerateResult:
+      type: object
+      required:
+        - templateId
+        - createdWoIds
+      properties:
+        templateId:
+          type: string
+        createdWoIds:
+          type: array
+          items:
+            type: string
+          description: IDs of work orders created by the generate action
+
+    PmCalendarEventDto:
+      type: object
+      required:
+        - day
+        - label
+        - templateId
+      properties:
+        day:
+          type: integer
+          format: int32
+          description: Day-of-month (1–31)
+          example: 8
+        label:
+          type: string
+          description: Short display label for the event
+          example: Chiller
+        templateId:
+          type: string
+          example: PM-CHW-Q
+        color:
+          type: string
+          description: CSS hex colour hint for calendar rendering
+
+    PmKpisDto:
+      type: object
+      required:
+        - compliancePct
+        - dueThisWeek
+        - overdue
+        - avgDurationHours
+      properties:
+        compliancePct:
+          type: number
+          format: double
+          example: 94.2
+        dueThisWeek:
+          type: integer
+          format: int32
+          example: 17
+        overdue:
+          type: integer
+          format: int32
+          example: 3
+        avgDurationHours:
+          type: number
+          format: double
+          example: 3.8

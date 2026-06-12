@@ -8,7 +8,7 @@ info:
     This specification is the single source of truth for all API interfaces.
     Server stubs (Spring Boot) and client code (Angular) are generated from it.
     Do not write HTTP glue code by hand — regenerate from this spec.
-  version: 1.6.0
+  version: 1.7.0
   contact:
     name: CMMS Team
     url: https://github.com/babakmirghafari/cmms-api-contract
@@ -37,6 +37,8 @@ tags:
     description: Checklist management — task definition library (7 types) and checklist templates used as work order acceptance criteria
   - name: inspections
     description: Inspection rounds — operator rounds, condition inspections, area-based checkpoint schedules
+  - name: preventive
+    description: Preventive Maintenance — PM templates (5 trigger types), monthly calendar, WO generation, compliance KPIs
 
 paths:
   /health:
@@ -2005,6 +2007,199 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDto'
 
+  /pm-templates:
+    get:
+      summary: List PM templates
+      description: Returns all PM templates, optionally filtered by site and trigger type.
+      operationId: listPmTemplates
+      tags:
+        - preventive
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: trigger
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/PmTrigger'
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of PM templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PmTemplateDto'
+    post:
+      summary: Create PM template
+      operationId: createPmTemplate
+      tags:
+        - preventive
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PmTemplateCreateRequest'
+      responses:
+        '200':
+          description: Created PM template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PmTemplateDto'
+
+  /pm-templates/{id}:
+    put:
+      summary: Update PM template
+      operationId: updatePmTemplate
+      tags:
+        - preventive
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PmTemplateUpdateRequest'
+      responses:
+        '200':
+          description: Updated PM template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PmTemplateDto'
+        '404':
+          description: PM template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      summary: Delete PM template
+      operationId: deletePmTemplate
+      tags:
+        - preventive
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: PM template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /pm-templates/{id}/generate:
+    post:
+      summary: Generate work orders from PM template
+      description: Triggers WO generation from the given PM template immediately, updating lastGen date.
+      operationId: generatePmWorkOrders
+      tags:
+        - preventive
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Generation result including created WO IDs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PmGenerateResult'
+        '404':
+          description: PM template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /pm-templates/calendar:
+    get:
+      summary: PM calendar events for a month
+      description: Returns PM schedule events for the given month, used to render the calendar view.
+      operationId: getPmCalendar
+      tags:
+        - preventive
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 12
+          description: Month number (1–12)
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+          description: 4-digit year
+      responses:
+        '200':
+          description: Calendar events for the requested month
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PmCalendarEventDto'
+
+  /pm-templates/kpis:
+    get:
+      summary: PM compliance KPIs
+      description: Returns PM compliance percentage, due this week, overdue count, and average PM duration.
+      operationId: getPmKpis
+      tags:
+        - preventive
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: PM KPIs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PmKpisDto'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -2097,6 +2292,22 @@ components:
       $ref: './schemas/workorders.yaml#/components/schemas/AttachChecklistRequest'
     ChecklistItemPatchRequest:
       $ref: './schemas/workorders.yaml#/components/schemas/ChecklistItemPatchRequest'
+
+    # Preventive ($ref to schemas/preventive.yaml)
+    PmTrigger:
+      $ref: './schemas/preventive.yaml#/components/schemas/PmTrigger'
+    PmTemplateDto:
+      $ref: './schemas/preventive.yaml#/components/schemas/PmTemplateDto'
+    PmTemplateCreateRequest:
+      $ref: './schemas/preventive.yaml#/components/schemas/PmTemplateCreateRequest'
+    PmTemplateUpdateRequest:
+      $ref: './schemas/preventive.yaml#/components/schemas/PmTemplateUpdateRequest'
+    PmGenerateResult:
+      $ref: './schemas/preventive.yaml#/components/schemas/PmGenerateResult'
+    PmCalendarEventDto:
+      $ref: './schemas/preventive.yaml#/components/schemas/PmCalendarEventDto'
+    PmKpisDto:
+      $ref: './schemas/preventive.yaml#/components/schemas/PmKpisDto'
 
     # Inspections ($ref to schemas/inspections.yaml)
     InspectionStatus:
