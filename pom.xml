@@ -6,7 +6,7 @@
 
   <groupId>com.cmms</groupId>
   <artifactId>cmms-api-contract</artifactId>
-  <version>1.8.0</version>
+  <version>1.9.0</version>
   <packaging>jar</packaging>
 
   <name>CMMS API Contract</name>

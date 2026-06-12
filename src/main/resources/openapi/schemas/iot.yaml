@@ -1,0 +1,383 @@
+openapi: "3.0.3"
+info:
+  title: CMMS IoT & Automation Schemas
+  version: "1.9.0"
+
+components:
+  schemas:
+
+    # ── Sensor protocol enum ──────────────────────────────────────────────────
+    SensorProtocol:
+      type: string
+      description: Communication protocol used by the sensor
+      enum:
+        - MQTT
+        - OPC_UA
+        - MODBUS
+        - HTTP
+      example: MQTT
+
+    # ── Sensor management DTO ────────────────────────────────────────────────
+    SensorDto:
+      type: object
+      description: Full sensor record including current live value and status
+      required:
+        - id
+        - param
+        - unit
+        - protocol
+        - enabled
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique sensor identifier
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        assetId:
+          type: string
+          format: uuid
+          description: ID of the asset this sensor is attached to
+          example: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+        assetName:
+          type: string
+          description: Display name of the attached asset
+          example: "K-01 Air Compressor"
+        param:
+          type: string
+          description: Physical parameter being measured
+          example: "Bearing Vibration"
+        unit:
+          type: string
+          description: Unit of measurement
+          example: "mm/s"
+        protocol:
+          $ref: '#/components/schemas/SensorProtocol'
+        enabled:
+          type: boolean
+          description: Whether this sensor is actively streaming
+          example: true
+        value:
+          type: number
+          format: double
+          description: Latest reading value
+          example: 4.2
+        warnThreshold:
+          type: number
+          format: double
+          description: Warning threshold — sensor status becomes WARNING above/below this
+          example: 5.0
+        alarmThreshold:
+          type: number
+          format: double
+          description: Alarm threshold — sensor status becomes ALARM above/below this
+          example: 7.1
+        direction:
+          type: string
+          description: "Threshold direction: 'high' means alarm when value is high, 'low' means alarm when value is low"
+          enum:
+            - high
+            - low
+          example: "high"
+        externalId:
+          type: string
+          description: External device identifier (e.g. MQTT topic or OPC node ID)
+          example: "sensor/k01/vibration"
+
+    # ── Create request ───────────────────────────────────────────────────────
+    SensorCreateRequest:
+      type: object
+      description: Payload to register a new sensor
+      required:
+        - assetId
+        - param
+        - unit
+        - protocol
+      properties:
+        assetId:
+          type: string
+          format: uuid
+          example: "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+        param:
+          type: string
+          example: "Bearing Vibration"
+        unit:
+          type: string
+          example: "mm/s"
+        protocol:
+          $ref: '#/components/schemas/SensorProtocol'
+        enabled:
+          type: boolean
+          default: true
+        value:
+          type: number
+          format: double
+          example: 0.0
+        warnThreshold:
+          type: number
+          format: double
+          example: 5.0
+        alarmThreshold:
+          type: number
+          format: double
+          example: 7.1
+        direction:
+          type: string
+          enum:
+            - high
+            - low
+          default: high
+        externalId:
+          type: string
+          example: "sensor/k01/vibration"
+
+    # ── Update request (same fields, all optional) ───────────────────────────
+    SensorUpdateRequest:
+      type: object
+      description: Payload to update an existing sensor
+      properties:
+        param:
+          type: string
+        unit:
+          type: string
+        protocol:
+          $ref: '#/components/schemas/SensorProtocol'
+        enabled:
+          type: boolean
+        warnThreshold:
+          type: number
+          format: double
+        alarmThreshold:
+          type: number
+          format: double
+        direction:
+          type: string
+          enum:
+            - high
+            - low
+        externalId:
+          type: string
+
+    # ── SSE reading event ────────────────────────────────────────────────────
+    SensorReadingEvent:
+      type: object
+      description: A single sensor reading event streamed over SSE
+      required:
+        - sensorId
+        - value
+        - timestamp
+      properties:
+        sensorId:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        param:
+          type: string
+          example: "Bearing Vibration"
+        unit:
+          type: string
+          example: "mm/s"
+        value:
+          type: number
+          format: double
+          example: 4.8
+        status:
+          type: string
+          enum:
+            - NORMAL
+            - WARNING
+            - ALARM
+          example: NORMAL
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-06-12T09:15:30Z"
+
+    # ── Automation rule ──────────────────────────────────────────────────────
+    AutomationRuleDto:
+      type: object
+      description: An automation rule that fires a Work Order when a sensor condition holds
+      required:
+        - id
+        - name
+        - sensorId
+        - operator
+        - threshold
+        - duration
+        - woType
+        - woPriority
+        - enabled
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "c3d4e5f6-a7b8-9012-cdef-123456789012"
+        name:
+          type: string
+          description: Human-readable rule name
+          example: "High Vibration Alert"
+        sensorId:
+          type: string
+          format: uuid
+          description: ID of the sensor this rule monitors
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        sensorParam:
+          type: string
+          description: Parameter name (denormalized for display)
+          example: "Bearing Vibration"
+        operator:
+          type: string
+          description: Comparison operator
+          enum:
+            - ">"
+            - ">="
+            - "<"
+            - "<="
+          example: ">"
+        threshold:
+          type: number
+          format: double
+          description: Threshold value that triggers the condition
+          example: 7.1
+        duration:
+          type: integer
+          description: Number of consecutive readings the condition must hold before firing
+          example: 3
+        woTitle:
+          type: string
+          description: Title for the auto-created Work Order
+          example: "Inspect K-01 bearing — vibration alarm"
+        woType:
+          type: string
+          description: Work Order type
+          enum:
+            - Corrective
+            - Preventive
+            - Inspection
+          example: "Corrective"
+        woPriority:
+          type: string
+          description: Work Order priority
+          enum:
+            - Critical
+            - High
+            - Medium
+            - Low
+          example: "Critical"
+        woAssignee:
+          type: string
+          description: Assignee for the auto-created Work Order
+          example: "J. Martinez"
+        enabled:
+          type: boolean
+          description: Whether this rule is active
+          example: true
+        triggerCount:
+          type: integer
+          description: Total number of times this rule has fired
+          example: 4
+        lastTriggered:
+          type: string
+          description: Human-readable last triggered time
+          example: "2h ago"
+
+    # ── Automation rule create request ───────────────────────────────────────
+    AutomationRuleCreateRequest:
+      type: object
+      description: Payload to create a new automation rule
+      required:
+        - name
+        - sensorId
+        - operator
+        - threshold
+        - duration
+        - woType
+        - woPriority
+      properties:
+        name:
+          type: string
+          example: "High Vibration Alert"
+        sensorId:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        operator:
+          type: string
+          enum:
+            - ">"
+            - ">="
+            - "<"
+            - "<="
+          example: ">"
+        threshold:
+          type: number
+          format: double
+          example: 7.1
+        duration:
+          type: integer
+          example: 3
+        woTitle:
+          type: string
+          example: "Inspect K-01 bearing — vibration alarm"
+        woType:
+          type: string
+          enum:
+            - Corrective
+            - Preventive
+            - Inspection
+          example: "Corrective"
+        woPriority:
+          type: string
+          enum:
+            - Critical
+            - High
+            - Medium
+            - Low
+          example: "Critical"
+        woAssignee:
+          type: string
+          example: "J. Martinez"
+        enabled:
+          type: boolean
+          default: true
+
+    # ── Automation rule update request ───────────────────────────────────────
+    AutomationRuleUpdateRequest:
+      type: object
+      description: Payload to update an existing automation rule
+      properties:
+        name:
+          type: string
+        sensorId:
+          type: string
+          format: uuid
+        operator:
+          type: string
+          enum:
+            - ">"
+            - ">="
+            - "<"
+            - "<="
+        threshold:
+          type: number
+          format: double
+        duration:
+          type: integer
+        woTitle:
+          type: string
+        woType:
+          type: string
+          enum:
+            - Corrective
+            - Preventive
+            - Inspection
+        woPriority:
+          type: string
+          enum:
+            - Critical
+            - High
+            - Medium
+            - Low
+        woAssignee:
+          type: string
+        enabled:
+          type: boolean
