@@ -1,0 +1,119 @@
+components:
+  schemas:
+
+    InspectionStatus:
+      type: string
+      description: Lifecycle status of an inspection round
+      enum:
+        - Open
+        - Scheduled
+        - Completed
+
+    InspectionDto:
+      type: object
+      description: An operator inspection round or condition check record
+      required:
+        - id
+        - name
+        - status
+      properties:
+        id:
+          type: string
+          description: Human-readable identifier (e.g. INS-2210)
+          example: INS-2210
+        name:
+          type: string
+          description: Name of the inspection round
+          example: Daily Press Shop Round
+        area:
+          type: string
+          description: Area or zone covered by this inspection
+          example: Press Shop
+        items:
+          type: integer
+          format: int32
+          description: Number of checkpoint items in this inspection round
+          example: 14
+        due:
+          type: string
+          description: Due date / time description
+          example: Today 14:00
+        status:
+          $ref: '#/components/schemas/InspectionStatus'
+        assignee:
+          type: string
+          description: Name of the assigned technician or operator
+          example: Lukas Bauer
+        siteId:
+          type: string
+          format: uuid
+          description: Site the inspection belongs to
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    InspectionCreateRequest:
+      type: object
+      description: Payload to create a new inspection round
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name of the inspection round
+          example: Weekly Utilities Check
+        area:
+          type: string
+          description: Area or zone to be inspected
+          example: Utilities
+        items:
+          type: integer
+          format: int32
+          description: Number of checkpoint items
+          example: 9
+        due:
+          type: string
+          description: Due date / time description
+          example: Tomorrow
+        status:
+          $ref: '#/components/schemas/InspectionStatus'
+        assignee:
+          type: string
+          description: Name of the assigned technician
+          example: Marie Dubois
+        siteId:
+          type: string
+          format: uuid
+          description: Site the inspection belongs to
+
+    InspectionUpdateRequest:
+      type: object
+      description: Payload to update an existing inspection round (all fields optional)
+      properties:
+        name:
+          type: string
+          description: Updated inspection name
+        area:
+          type: string
+          description: Updated area
+        items:
+          type: integer
+          format: int32
+          description: Updated checkpoint count
+        due:
+          type: string
+          description: Updated due date / time description
+        status:
+          $ref: '#/components/schemas/InspectionStatus'
+        assignee:
+          type: string
+          description: Updated assignee name
+        siteId:
+          type: string
+          format: uuid
+          description: Updated site

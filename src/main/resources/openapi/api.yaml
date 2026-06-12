@@ -8,7 +8,7 @@ info:
     This specification is the single source of truth for all API interfaces.
     Server stubs (Spring Boot) and client code (Angular) are generated from it.
     Do not write HTTP glue code by hand — regenerate from this spec.
-  version: 1.5.0
+  version: 1.6.0
   contact:
     name: CMMS Team
     url: https://github.com/babakmirghafari/cmms-api-contract
@@ -35,6 +35,8 @@ tags:
     description: Work order management — 5-step lifecycle, 6-tab detail drawer, Kanban board, acceptance checklists, timeline events, and comments
   - name: checklists
     description: Checklist management — task definition library (7 types) and checklist templates used as work order acceptance criteria
+  - name: inspections
+    description: Inspection rounds — operator rounds, condition inspections, area-based checkpoint schedules
 
 paths:
   /health:
@@ -1854,6 +1856,155 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDto'
 
+  /inspections:
+    get:
+      summary: List inspection rounds
+      description: Returns all inspection rounds, optionally filtered by status, area, or site.
+      operationId: listInspections
+      tags:
+        - inspections
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/InspectionStatus'
+        - name: area
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: q
+          in: query
+          required: false
+          description: Full-text search on name and area
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of inspection rounds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InspectionDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      summary: Create inspection round
+      description: Creates a new operator inspection round.
+      operationId: createInspection
+      tags:
+        - inspections
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionCreateRequest'
+      responses:
+        '200':
+          description: Inspection round created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionDto'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /inspections/{id}:
+    put:
+      summary: Update inspection round
+      description: Updates an existing inspection round, including status toggle (Open ↔ Scheduled ↔ Completed).
+      operationId: updateInspection
+      tags:
+        - inspections
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionUpdateRequest'
+      responses:
+        '200':
+          description: Inspection round updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionDto'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Inspection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      summary: Delete inspection round
+      description: Removes an inspection round record.
+      operationId: deleteInspection
+      tags:
+        - inspections
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Inspection deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Inspection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1946,6 +2097,16 @@ components:
       $ref: './schemas/workorders.yaml#/components/schemas/AttachChecklistRequest'
     ChecklistItemPatchRequest:
       $ref: './schemas/workorders.yaml#/components/schemas/ChecklistItemPatchRequest'
+
+    # Inspections ($ref to schemas/inspections.yaml)
+    InspectionStatus:
+      $ref: './schemas/inspections.yaml#/components/schemas/InspectionStatus'
+    InspectionDto:
+      $ref: './schemas/inspections.yaml#/components/schemas/InspectionDto'
+    InspectionCreateRequest:
+      $ref: './schemas/inspections.yaml#/components/schemas/InspectionCreateRequest'
+    InspectionUpdateRequest:
+      $ref: './schemas/inspections.yaml#/components/schemas/InspectionUpdateRequest'
 
     # Checklists ($ref to schemas/checklists.yaml)
     TaskDefinitionType:
