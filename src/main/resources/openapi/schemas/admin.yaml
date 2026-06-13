@@ -1,0 +1,160 @@
+openapi: 3.1.0
+info:
+  title: CMMS Admin Schemas
+  version: 2.5.0
+
+components:
+  schemas:
+
+    # ── Admin KPIs ────────────────────────────────────────────────────────────
+
+    AdminKpisDto:
+      type: object
+      description: High-level administration metrics
+      properties:
+        activeUsers:
+          type: integer
+          description: Number of currently active users
+          example: 148
+        rolesCount:
+          type: integer
+          description: Total number of roles configured
+          example: 10
+        ssoSessions:
+          type: integer
+          description: Active SSO/federated sessions
+          example: 132
+        auditEvents24h:
+          type: integer
+          description: Number of audit events in the last 24 hours
+          example: 2418
+
+    # ── User ──────────────────────────────────────────────────────────────────
+
+    UserDto:
+      type: object
+      description: An active CMMS user
+      required:
+        - id
+        - name
+        - email
+        - role
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+          example: "USR-001"
+        name:
+          type: string
+          description: Display name of the user
+          example: "Anna Keller"
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: "anna.keller@plant.de"
+        role:
+          type: string
+          description: Assigned role
+          example: "Supervisor"
+        active:
+          type: boolean
+          description: Whether the user account is active
+          example: true
+
+    UserInviteRequest:
+      type: object
+      description: Request body to invite a new user
+      required:
+        - name
+        - email
+        - role
+      properties:
+        name:
+          type: string
+          description: Full name of the invitee
+          example: "Marie Dubois"
+        email:
+          type: string
+          format: email
+          description: Email address to send the invite to
+          example: "marie.dubois@plant.fr"
+        role:
+          type: string
+          description: Role to assign on account activation
+          example: "Technician"
+
+    # ── Role ──────────────────────────────────────────────────────────────────
+
+    RoleDto:
+      type: object
+      description: A named role with its per-module permissions
+      required:
+        - name
+        - permissions
+      properties:
+        name:
+          type: string
+          description: Role name
+          example: "Administrator"
+        permissions:
+          type: array
+          description: "Permission code per module in module order: F=Full, E=Edit, A=Approve, R=Read, NONE=No access"
+          items:
+            type: string
+            enum:
+              - F
+              - E
+              - A
+              - R
+              - NONE
+          example: ["F","F","F","F","F","F","F","F","F","F"]
+
+    RoleUpdateRequest:
+      type: object
+      description: Request to update a role's permissions
+      required:
+        - permissions
+      properties:
+        permissions:
+          type: array
+          description: New permission codes for each module
+          items:
+            type: string
+            enum:
+              - F
+              - E
+              - A
+              - R
+              - NONE
+          example: ["F","E","A","A","R","R","A","F","F","NONE"]
+
+    # ── Security config ───────────────────────────────────────────────────────
+
+    SecurityConfigDto:
+      type: object
+      description: Security configuration and compliance posture
+      properties:
+        ssoEnabled:
+          type: boolean
+          description: Whether Single Sign-On is enabled
+          example: true
+        ssoProvider:
+          type: string
+          description: SSO provider name
+          example: "Azure AD / Microsoft Entra ID"
+        mfaEnforced:
+          type: boolean
+          description: Whether Multi-Factor Authentication is enforced
+          example: true
+        auditRetentionYears:
+          type: integer
+          description: Audit log retention period in years
+          example: 7
+        complianceStandards:
+          type: array
+          description: List of compliance standards the deployment aligns with
+          items:
+            type: string
+          example: ["ISO 55001","ISO 14224","ISO 27001","GDPR"]
