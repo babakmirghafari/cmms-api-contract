@@ -1,0 +1,309 @@
+openapi: 3.1.0
+info:
+  title: CMMS Procurement Schemas
+  version: 2.2.0
+
+components:
+  schemas:
+
+    ProcurementKpisDto:
+      type: object
+      description: Procurement summary KPIs
+      required:
+        - openPos
+        - pendingApproval
+        - spendMtd
+        - activeSuppliers
+      properties:
+        openPos:
+          type: integer
+          description: Number of open purchase orders
+          example: 5
+        pendingApproval:
+          type: integer
+          description: Number of purchase requests pending approval
+          example: 2
+        spendMtd:
+          type: string
+          description: Month-to-date spend (display string with currency symbol)
+          example: "€42.8k"
+        activeSuppliers:
+          type: integer
+          description: Number of active suppliers
+          example: 6
+
+    PurchaseOrderDto:
+      type: object
+      description: A purchase order sent to a supplier
+      required:
+        - id
+        - supplier
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique PO identifier
+        poNumber:
+          type: string
+          description: Human-readable PO number (e.g. PO-0042)
+          example: "PO-0042"
+        supplier:
+          type: string
+          description: Supplier name
+          example: "SKF"
+        items:
+          type: integer
+          description: Number of line items
+          example: 3
+        total:
+          type: string
+          description: Total amount (display string)
+          example: "€1,240.00"
+        requested:
+          type: string
+          format: date
+          description: Date the PO was raised
+        eta:
+          type: string
+          description: Estimated delivery date
+          example: "2026-07-10"
+        buyer:
+          type: string
+          description: Buyer's name
+          example: "P. Lindqvist"
+        status:
+          type: string
+          enum:
+            - Draft
+            - Pending Approval
+            - Approved
+            - Sent
+            - Received
+            - Rejected
+          description: Current PO status
+          example: "Approved"
+
+    PurchaseOrderCreateRequest:
+      type: object
+      required:
+        - supplier
+        - status
+      properties:
+        supplier:
+          type: string
+        items:
+          type: integer
+        total:
+          type: string
+        eta:
+          type: string
+        buyer:
+          type: string
+        status:
+          type: string
+          enum:
+            - Draft
+            - Pending Approval
+            - Approved
+            - Sent
+            - Received
+            - Rejected
+
+    PurchaseOrderUpdateRequest:
+      type: object
+      properties:
+        supplier:
+          type: string
+        items:
+          type: integer
+        total:
+          type: string
+        eta:
+          type: string
+        buyer:
+          type: string
+        status:
+          type: string
+          enum:
+            - Draft
+            - Pending Approval
+            - Approved
+            - Sent
+            - Received
+            - Rejected
+
+    PurchaseRequestDto:
+      type: object
+      description: A purchase request created by a technician or system
+      required:
+        - id
+        - desc
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique PR identifier
+        prNumber:
+          type: string
+          description: Human-readable PR number (e.g. PR-0012)
+          example: "PR-0012"
+        desc:
+          type: string
+          description: Description of what is being requested
+          example: "Reorder BRG-6312-C3 — stock below minimum"
+        requester:
+          type: string
+          description: Name of the person who raised the PR
+          example: "Anna Keller"
+        total:
+          type: string
+          description: Estimated total cost (display string)
+          example: "€504.00"
+        priority:
+          type: string
+          enum:
+            - Low
+            - Medium
+            - High
+            - Critical
+          description: PR urgency
+          example: "High"
+        date:
+          type: string
+          format: date
+          description: Date the PR was created
+        status:
+          type: string
+          enum:
+            - Draft
+            - Pending Approval
+            - Approved
+            - Rejected
+          description: Current PR status
+          example: "Pending Approval"
+
+    PurchaseRequestCreateRequest:
+      type: object
+      required:
+        - desc
+        - status
+      properties:
+        desc:
+          type: string
+        requester:
+          type: string
+        total:
+          type: string
+        priority:
+          type: string
+          enum:
+            - Low
+            - Medium
+            - High
+            - Critical
+        status:
+          type: string
+          enum:
+            - Draft
+            - Pending Approval
+            - Approved
+            - Rejected
+
+    PurchaseRequestUpdateRequest:
+      type: object
+      properties:
+        desc:
+          type: string
+        requester:
+          type: string
+        total:
+          type: string
+        priority:
+          type: string
+          enum:
+            - Low
+            - Medium
+            - High
+            - Critical
+        status:
+          type: string
+          enum:
+            - Draft
+            - Pending Approval
+            - Approved
+            - Rejected
+
+    SupplierDto:
+      type: object
+      description: A supplier in the procurement network
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique supplier identifier
+        name:
+          type: string
+          description: Supplier name
+          example: "SKF"
+        cat:
+          type: string
+          description: Supplier category
+          example: "Bearings & Seals"
+        rating:
+          type: number
+          format: double
+          description: Supplier quality rating (0–5)
+          example: 4.8
+        onTime:
+          type: integer
+          description: On-time delivery percentage
+          example: 97
+        openPo:
+          type: integer
+          description: Number of open POs with this supplier
+          example: 2
+        spend:
+          type: string
+          description: Year-to-date spend (display string)
+          example: "€22,400"
+
+    SupplierCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        cat:
+          type: string
+        rating:
+          type: number
+          format: double
+        onTime:
+          type: integer
+        openPo:
+          type: integer
+        spend:
+          type: string
+
+    SupplierUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        cat:
+          type: string
+        rating:
+          type: number
+          format: double
+        onTime:
+          type: integer
+        openPo:
+          type: integer
+        spend:
+          type: string
