@@ -8,7 +8,7 @@ info:
     This specification is the single source of truth for all API interfaces.
     Server stubs (Spring Boot) and client code (Angular) are generated from it.
     Do not write HTTP glue code by hand — regenerate from this spec.
-  version: 2.3.0
+  version: 2.4.0
   contact:
     name: CMMS Team
     url: https://github.com/babakmirghafari/cmms-api-contract
@@ -51,6 +51,8 @@ tags:
     description: Procurement — purchase orders, purchase requests, and supplier management
   - name: reports
     description: Reports & Analytics — executive KPIs, cost/backlog/downtime trend charts, cost-by-type donut, and report library cards
+  - name: documents
+    description: Documents — technical documentation with version control, category counts, upload/edit/approve/delete
 
 paths:
   /health:
@@ -3770,6 +3772,176 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDto'
 
+  # ── Documents ──────────────────────────────────────────────────────────────
+
+  /documents:
+    get:
+      summary: List documents
+      operationId: listDocuments
+      tags:
+        - documents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cat
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by category (Drawings, Manuals, Certificates, Safety Documents, Procedures)
+      responses:
+        '200':
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DocumentDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      summary: Create document
+      operationId: createDocument
+      tags:
+        - documents
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentCreateRequest'
+      responses:
+        '200':
+          description: Created document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /documents/{id}:
+    put:
+      summary: Update document
+      operationId: updateDocument
+      tags:
+        - documents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentUpdateRequest'
+      responses:
+        '200':
+          description: Updated document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      summary: Delete document
+      operationId: deleteDocument
+      tags:
+        - documents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /documents/categories:
+    get:
+      summary: List document category counts
+      operationId: listDocumentCategories
+      tags:
+        - documents
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Category stats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DocumentCategoryDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /documents/{id}/approve:
+    post:
+      summary: Approve a document
+      operationId: approveDocument
+      tags:
+        - documents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Approved document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -4046,3 +4218,13 @@ components:
       $ref: './schemas/reports.yaml#/components/schemas/ReportsCostSegmentDto'
     ReportLibraryEntryDto:
       $ref: './schemas/reports.yaml#/components/schemas/ReportLibraryEntryDto'
+
+    # Documents ($ref to schemas/documents.yaml)
+    DocumentDto:
+      $ref: './schemas/documents.yaml#/components/schemas/DocumentDto'
+    DocumentCreateRequest:
+      $ref: './schemas/documents.yaml#/components/schemas/DocumentCreateRequest'
+    DocumentUpdateRequest:
+      $ref: './schemas/documents.yaml#/components/schemas/DocumentUpdateRequest'
+    DocumentCategoryDto:
+      $ref: './schemas/documents.yaml#/components/schemas/DocumentCategoryDto'
