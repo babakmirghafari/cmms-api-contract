@@ -1,0 +1,79 @@
+components:
+  schemas:
+    # Translation Center — language coverage list entry
+    LanguageDto:
+      type: object
+      description: Language with translation coverage percentage
+      required:
+        - code
+        - label
+        - native
+        - coveragePct
+        - totalKeys
+        - translatedKeys
+      properties:
+        code:
+          type: string
+          description: BCP-47 language code
+          example: "de"
+        label:
+          type: string
+          description: English display name
+          example: "German"
+        native:
+          type: string
+          description: Native display name
+          example: "Deutsch"
+        rtl:
+          type: boolean
+          description: True for right-to-left scripts
+          default: false
+        coveragePct:
+          type: integer
+          description: Percentage of keys that have a translation (0–100)
+          example: 94
+        totalKeys:
+          type: integer
+          description: Total number of translation keys
+          example: 312
+        translatedKeys:
+          type: integer
+          description: Number of keys with a non-empty translation
+          example: 293
+
+    # Single translation key entry
+    TranslationKeyDto:
+      type: object
+      description: A single i18n key with its translation for a given language
+      required:
+        - key
+        - baseValue
+      properties:
+        key:
+          type: string
+          description: Dot-separated i18n key path
+          example: "nav.dashboard"
+        baseValue:
+          type: string
+          description: English (base) value
+          example: "Dashboard"
+        translation:
+          type: string
+          description: Translated value; null or absent means not yet translated
+          example: "Übersicht"
+        missing:
+          type: boolean
+          description: True when translation is absent or equals the base value
+          default: false
+
+    # Request to update a single key
+    TranslationUpdateRequest:
+      type: object
+      description: Update a single translation key for a language
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          description: New translated value for this key
+          example: "Übersicht"
