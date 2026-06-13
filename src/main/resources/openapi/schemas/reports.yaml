@@ -1,0 +1,124 @@
+openapi: 3.1.0
+info:
+  title: CMMS Reports Schemas
+  version: 2.3.0
+
+components:
+  schemas:
+
+    # ── KPIs ─────────────────────────────────────────────────────────────────
+
+    ReportsKpisDto:
+      type: object
+      description: Executive KPIs for the Reports & Analytics screen
+      required:
+        - maintenanceCostMtd
+        - unplannedDowntime
+        - scheduleCompliance
+        - wrenchTime
+      properties:
+        maintenanceCostMtd:
+          type: string
+          description: Maintenance cost month-to-date (display string)
+          example: "€86.4k"
+        maintenanceCostDelta:
+          type: string
+          description: Change vs. previous period (display string)
+          example: "−4.2%"
+        unplannedDowntime:
+          type: string
+          description: Unplanned downtime (display string)
+          example: "33 h"
+        unplannedDowntimeDelta:
+          type: string
+          description: Change vs. previous period
+          example: "−12%"
+        scheduleCompliance:
+          type: string
+          description: Schedule compliance percentage (display string)
+          example: "91%"
+        scheduleComplianceDelta:
+          type: string
+          description: Change vs. previous period
+          example: "+3%"
+        wrenchTime:
+          type: string
+          description: Wrench time percentage (display string)
+          example: "64%"
+        wrenchTimeDelta:
+          type: string
+          description: Change vs. previous period
+          example: "+2%"
+
+    # ── Trend data point ──────────────────────────────────────────────────────
+
+    ReportsTrendPointDto:
+      type: object
+      description: A single data point in a trend series
+      required:
+        - value
+      properties:
+        label:
+          type: string
+          description: X-axis label (e.g. week number or month name)
+          example: "W22"
+        value:
+          type: number
+          format: double
+          description: Numeric value for this data point
+          example: 42.0
+
+    # ── Cost segment (donut chart) ────────────────────────────────────────────
+
+    ReportsCostSegmentDto:
+      type: object
+      description: A cost category segment for the Cost by Type donut chart
+      required:
+        - label
+        - value
+      properties:
+        label:
+          type: string
+          description: Category label
+          example: "Corrective"
+        value:
+          type: number
+          format: double
+          description: Cost value (€ thousands)
+          example: 48.0
+        colorHex:
+          type: string
+          description: Hex colour for the segment
+          example: "#d97706"
+
+    # ── Report library entry ──────────────────────────────────────────────────
+
+    ReportLibraryEntryDto:
+      type: object
+      description: A report card in the report library
+      required:
+        - id
+        - title
+        - desc
+        - icon
+      properties:
+        id:
+          type: string
+          description: Unique report identifier
+          example: "asset-availability"
+        title:
+          type: string
+          description: Report title
+          example: "Asset Availability"
+        desc:
+          type: string
+          description: Short description
+          example: "Uptime by site and system"
+        icon:
+          type: string
+          description: Font Awesome icon class
+          example: "fa-gauge-high"
+        colorHex:
+          type: string
+          description: Accent colour for the report card
+          example: "#16a34a"
