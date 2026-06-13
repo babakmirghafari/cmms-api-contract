@@ -8,7 +8,7 @@ info:
     This specification is the single source of truth for all API interfaces.
     Server stubs (Spring Boot) and client code (Angular) are generated from it.
     Do not write HTTP glue code by hand — regenerate from this spec.
-  version: 1.9.0
+  version: 2.0.0
   contact:
     name: CMMS Team
     url: https://github.com/babakmirghafari/cmms-api-contract
@@ -41,6 +41,10 @@ tags:
     description: Preventive Maintenance — PM templates (5 trigger types), monthly calendar, WO generation, compliance KPIs
   - name: predictive
     description: Predictive Maintenance — AI anomaly detection, sensor trend charts, asset health scores, sensor readings table
+  - name: iot
+    description: IoT & Automation — sensor management, live condition streaming, SSE feed, and automation rules that auto-create work orders
+  - name: reliability
+    description: Reliability Center — ISO 14224 failure analysis, MTBF/MTTR/Availability/OEE KPIs, failure event CRUD, failure network graph, and top-failing assets
 
 paths:
   /health:
@@ -2632,6 +2636,391 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDto'
 
+  # ────────────────────────────────────────────────────────────────────────────
+  # RELIABILITY (ISO 14224 failure analysis, RAM metrics)
+  # ────────────────────────────────────────────────────────────────────────────
+
+  /reliability/kpis:
+    get:
+      summary: Get reliability KPIs
+      description: Returns MTBF, MTTR, Availability, and OEE summary KPIs for the header row.
+      operationId: getReliabilityKpis
+      tags:
+        - reliability
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Reliability KPIs retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReliabilityKpisDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /reliability/mtbf-trend:
+    get:
+      summary: Get MTBF trend
+      description: Returns weekly MTBF values for the 8-week trend chart on the Overview tab.
+      operationId: getMtbfTrend
+      tags:
+        - reliability
+      parameters:
+        - name: weeks
+          in: query
+          required: false
+          description: Number of weeks to return (default 8)
+          schema:
+            type: integer
+            default: 8
+      responses:
+        '200':
+          description: MTBF trend data retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MtbfTrendPointDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /reliability/downtime-by-month:
+    get:
+      summary: Get downtime by month
+      description: Returns monthly total downtime hours for the bar chart on the Overview tab.
+      operationId: getDowntimeByMonth
+      tags:
+        - reliability
+      parameters:
+        - name: months
+          in: query
+          required: false
+          description: Number of months to return (default 6)
+          schema:
+            type: integer
+            default: 6
+      responses:
+        '200':
+          description: Downtime by month data retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DowntimeByMonthDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /reliability/failure-modes-distribution:
+    get:
+      summary: Get failure modes distribution
+      description: Returns failure-mode counts for the ISO 14224 donut chart on the Overview tab.
+      operationId: getFailureModeDistribution
+      tags:
+        - reliability
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Failure modes distribution retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FailureModeDistributionDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /reliability/top-failing-assets:
+    get:
+      summary: Get top failing assets
+      description: Returns assets ranked by failure count for the Top Failing Assets tab.
+      operationId: getTopFailingAssets
+      tags:
+        - reliability
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of assets to return (default 10)
+          schema:
+            type: integer
+            default: 10
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Top failing assets retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TopFailingAssetDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /failures:
+    get:
+      summary: List failure events
+      description: Returns all failure events, optionally filtered by asset or date range.
+      operationId: listFailures
+      tags:
+        - reliability
+      parameters:
+        - name: asset
+          in: query
+          required: false
+          description: Filter by asset tag
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Failure events list retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FailureEventDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      summary: Log a failure event
+      description: Creates a new ISO 14224 failure event record.
+      operationId: createFailure
+      tags:
+        - reliability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FailureEventCreateRequest'
+      responses:
+        '200':
+          description: Failure event created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailureEventDto'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /failures/{id}:
+    get:
+      summary: Get a failure event
+      description: Returns a single failure event by ID.
+      operationId: getFailure
+      tags:
+        - reliability
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Failure event retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailureEventDto'
+        '404':
+          description: Failure event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    put:
+      summary: Update a failure event
+      description: Updates an existing failure event record.
+      operationId: updateFailure
+      tags:
+        - reliability
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FailureEventUpdateRequest'
+      responses:
+        '200':
+          description: Failure event updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailureEventDto'
+        '404':
+          description: Failure event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      summary: Delete a failure event
+      description: Permanently removes a failure event record.
+      operationId: deleteFailure
+      tags:
+        - reliability
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Failure event deleted
+        '404':
+          description: Failure event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /failure-nodes:
+    get:
+      summary: List failure network nodes
+      description: Returns all nodes (causes, mechanisms, modes, effects) in the ISO 14224 failure network graph.
+      operationId: listFailureNodes
+      tags:
+        - reliability
+      parameters:
+        - name: type
+          in: query
+          required: false
+          description: Filter by node type
+          schema:
+            type: string
+            enum: [cause, mechanism, mode, effect]
+      responses:
+        '200':
+          description: Failure network nodes retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FailureNodeDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /failure-edges:
+    get:
+      summary: List failure network edges
+      description: Returns all directed edges in the failure network graph.
+      operationId: listFailureEdges
+      tags:
+        - reliability
+      responses:
+        '200':
+          description: Failure network edges retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FailureEdgeDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -2758,6 +3147,28 @@ components:
       $ref: './schemas/iot.yaml#/components/schemas/AutomationRuleCreateRequest'
     AutomationRuleUpdateRequest:
       $ref: './schemas/iot.yaml#/components/schemas/AutomationRuleUpdateRequest'
+
+    # Reliability ($ref to schemas/reliability.yaml)
+    ReliabilityKpisDto:
+      $ref: './schemas/reliability.yaml#/components/schemas/ReliabilityKpisDto'
+    MtbfTrendPointDto:
+      $ref: './schemas/reliability.yaml#/components/schemas/MtbfTrendPointDto'
+    DowntimeByMonthDto:
+      $ref: './schemas/reliability.yaml#/components/schemas/DowntimeByMonthDto'
+    FailureModeDistributionDto:
+      $ref: './schemas/reliability.yaml#/components/schemas/FailureModeDistributionDto'
+    FailureEventDto:
+      $ref: './schemas/reliability.yaml#/components/schemas/FailureEventDto'
+    FailureEventCreateRequest:
+      $ref: './schemas/reliability.yaml#/components/schemas/FailureEventCreateRequest'
+    FailureEventUpdateRequest:
+      $ref: './schemas/reliability.yaml#/components/schemas/FailureEventUpdateRequest'
+    FailureNodeDto:
+      $ref: './schemas/reliability.yaml#/components/schemas/FailureNodeDto'
+    FailureEdgeDto:
+      $ref: './schemas/reliability.yaml#/components/schemas/FailureEdgeDto'
+    TopFailingAssetDto:
+      $ref: './schemas/reliability.yaml#/components/schemas/TopFailingAssetDto'
 
     # Predictive ($ref to schemas/predictive.yaml)
     SensorStatus:
