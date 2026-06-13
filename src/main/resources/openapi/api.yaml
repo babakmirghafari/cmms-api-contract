@@ -8,7 +8,7 @@ info:
     This specification is the single source of truth for all API interfaces.
     Server stubs (Spring Boot) and client code (Angular) are generated from it.
     Do not write HTTP glue code by hand — regenerate from this spec.
-  version: 2.2.0
+  version: 2.3.0
   contact:
     name: CMMS Team
     url: https://github.com/babakmirghafari/cmms-api-contract
@@ -49,6 +49,8 @@ tags:
     description: Inventory — spare-parts / MRO catalog, stock levels, reorder alerts, stock movements, and adjustments
   - name: procurement
     description: Procurement — purchase orders, purchase requests, and supplier management
+  - name: reports
+    description: Reports & Analytics — executive KPIs, cost/backlog/downtime trend charts, cost-by-type donut, and report library cards
 
 paths:
   /health:
@@ -3624,6 +3626,150 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDto'
 
+  # ── Reports ────────────────────────────────────────────────────────────────
+
+  /reports/kpis:
+    get:
+      summary: Get reports KPIs
+      operationId: getReportsKpis
+      tags:
+        - reports
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Reports KPIs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportsKpisDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /reports/cost-trend:
+    get:
+      summary: Get maintenance cost trend data (8 weeks)
+      operationId: getReportsCostTrend
+      tags:
+        - reports
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Weekly cost trend values
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportsTrendPointDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /reports/backlog-trend:
+    get:
+      summary: Get work order backlog trend data (7 weeks)
+      operationId: getReportsBacklogTrend
+      tags:
+        - reports
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Weekly backlog trend values
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportsTrendPointDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /reports/cost-by-type:
+    get:
+      summary: Get maintenance cost breakdown by work order type
+      operationId: getReportsCostByType
+      tags:
+        - reports
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cost segments by type
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportsCostSegmentDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /reports/downtime-trend:
+    get:
+      summary: Get planned vs unplanned downtime by month (6 months)
+      operationId: getReportsDowntimeTrend
+      tags:
+        - reports
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Monthly downtime values
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportsTrendPointDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /reports/library:
+    get:
+      summary: List report library cards
+      operationId: getReportsLibrary
+      tags:
+        - reports
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Report library entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportLibraryEntryDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -3890,3 +4036,13 @@ components:
           format: date-time
           description: UTC timestamp of the health check response
           example: "2026-06-10T20:00:00Z"
+
+    # Reports ($ref to schemas/reports.yaml)
+    ReportsKpisDto:
+      $ref: './schemas/reports.yaml#/components/schemas/ReportsKpisDto'
+    ReportsTrendPointDto:
+      $ref: './schemas/reports.yaml#/components/schemas/ReportsTrendPointDto'
+    ReportsCostSegmentDto:
+      $ref: './schemas/reports.yaml#/components/schemas/ReportsCostSegmentDto'
+    ReportLibraryEntryDto:
+      $ref: './schemas/reports.yaml#/components/schemas/ReportLibraryEntryDto'
