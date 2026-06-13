@@ -1,0 +1,222 @@
+openapi: "3.0.3"
+info:
+  title: CMMS Inventory Schemas
+  version: "2.1.0"
+
+components:
+  schemas:
+
+    # ── Inventory KPIs ───────────────────────────────────────────────────────
+    InventoryKpisDto:
+      type: object
+      description: Inventory header KPIs — catalog count, value, below-reorder count, reservations
+      required:
+        - catalogSkus
+        - inventoryValue
+        - belowReorder
+        - reservations
+      properties:
+        catalogSkus:
+          type: integer
+          description: Total number of part numbers in the catalog
+          example: 8
+        inventoryValue:
+          type: string
+          description: Total inventory value (display string with currency symbol)
+          example: "€12.4k"
+        belowReorder:
+          type: integer
+          description: Number of parts at or below reorder point
+          example: 3
+        reservations:
+          type: integer
+          description: Number of parts currently reserved for work orders
+          example: 14
+
+    # ── Part DTO ──────────────────────────────────────────────────────────────
+    PartDto:
+      type: object
+      description: Spare-part / MRO catalog entry
+      required:
+        - id
+        - desc
+        - stock
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique part identifier
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        partNo:
+          type: string
+          description: Human-readable part number (e.g. BRG-6312-C3)
+          example: "BRG-6312-C3"
+        desc:
+          type: string
+          description: Part description
+          example: "Deep-groove ball bearing 6312 C3"
+        cat:
+          type: string
+          description: Part category
+          example: "Bearings"
+        stock:
+          type: integer
+          description: Current on-hand quantity
+          example: 4
+        minStock:
+          type: integer
+          description: Minimum stock level
+          example: 6
+        maxStock:
+          type: integer
+          description: Maximum stock level
+          example: 24
+        reorderPoint:
+          type: integer
+          description: Reorder trigger level
+          example: 8
+        supplier:
+          type: string
+          description: Supplier name
+          example: "SKF Deutschland"
+        cost:
+          type: string
+          description: Unit cost (display string with currency symbol)
+          example: "€42.00"
+        location:
+          type: string
+          description: Bin / shelf location
+          example: "A-12-3"
+        belowReorder:
+          type: boolean
+          description: True when stock <= reorderPoint
+          example: false
+
+    # ── Part create request ───────────────────────────────────────────────────
+    PartCreateRequest:
+      type: object
+      description: Payload to register a new part in the catalog
+      required:
+        - desc
+        - stock
+      properties:
+        partNo:
+          type: string
+          example: "BRG-6312-C3"
+        desc:
+          type: string
+          example: "Deep-groove ball bearing 6312 C3"
+        cat:
+          type: string
+          example: "Bearings"
+        stock:
+          type: integer
+          example: 4
+        minStock:
+          type: integer
+          example: 6
+        maxStock:
+          type: integer
+          example: 24
+        reorderPoint:
+          type: integer
+          example: 8
+        supplier:
+          type: string
+          example: "SKF Deutschland"
+        cost:
+          type: string
+          example: "€42.00"
+        location:
+          type: string
+          example: "A-12-3"
+
+    # ── Part update request ───────────────────────────────────────────────────
+    PartUpdateRequest:
+      type: object
+      description: Payload to update an existing part
+      properties:
+        desc:
+          type: string
+        cat:
+          type: string
+        stock:
+          type: integer
+        minStock:
+          type: integer
+        maxStock:
+          type: integer
+        reorderPoint:
+          type: integer
+        supplier:
+          type: string
+        cost:
+          type: string
+        location:
+          type: string
+
+    # ── Stock adjustment ──────────────────────────────────────────────────────
+    StockAdjustRequest:
+      type: object
+      description: Stock adjustment payload (positive = receive, negative = issue)
+      required:
+        - delta
+        - reason
+      properties:
+        delta:
+          type: integer
+          description: Quantity change (positive to add, negative to subtract)
+          example: -2
+        reason:
+          type: string
+          description: Reason for the adjustment (e.g. work order reference)
+          example: "WO-24817"
+
+    # ── Stock movement ────────────────────────────────────────────────────────
+    StockMovementDto:
+      type: object
+      description: A single stock-movement audit record
+      required:
+        - id
+        - partId
+        - type
+        - qty
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "m1n2o3p4-q5r6-7890-stuv-wx1234567890"
+        partId:
+          type: string
+          format: uuid
+          description: Part that was adjusted
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        partNo:
+          type: string
+          description: Human-readable part number
+          example: "BRG-6312-C3"
+        type:
+          type: string
+          description: Movement type
+          enum:
+            - Issue
+            - Receipt
+            - Adjustment
+          example: "Issue"
+        qty:
+          type: integer
+          description: Quantity changed (signed — negative for issues)
+          example: -2
+        reference:
+          type: string
+          description: Related work order, PO, or note
+          example: "WO-24817"
+        performedBy:
+          type: string
+          description: Username of the person who made the adjustment
+          example: "L. Bauer"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-05-29T08:40:00Z"

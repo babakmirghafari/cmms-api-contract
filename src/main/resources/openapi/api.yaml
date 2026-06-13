@@ -8,7 +8,7 @@ info:
     This specification is the single source of truth for all API interfaces.
     Server stubs (Spring Boot) and client code (Angular) are generated from it.
     Do not write HTTP glue code by hand — regenerate from this spec.
-  version: 2.0.0
+  version: 2.1.0
   contact:
     name: CMMS Team
     url: https://github.com/babakmirghafari/cmms-api-contract
@@ -45,6 +45,8 @@ tags:
     description: IoT & Automation — sensor management, live condition streaming, SSE feed, and automation rules that auto-create work orders
   - name: reliability
     description: Reliability Center — ISO 14224 failure analysis, MTBF/MTTR/Availability/OEE KPIs, failure event CRUD, failure network graph, and top-failing assets
+  - name: inventory
+    description: Inventory — spare-parts / MRO catalog, stock levels, reorder alerts, stock movements, and adjustments
 
 paths:
   /health:
@@ -3021,6 +3023,272 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDto'
 
+  # ────────────────────────────────────────────────────────────────────────────
+  # INVENTORY (spare-parts / MRO catalog, stock management)
+  # ────────────────────────────────────────────────────────────────────────────
+
+  /inventory/kpis:
+    get:
+      summary: Get inventory KPIs
+      description: Returns catalog SKU count, total inventory value, below-reorder count, and reservation count.
+      operationId: getInventoryKpis
+      tags:
+        - inventory
+      parameters:
+        - name: siteId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Inventory KPIs retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryKpisDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /parts:
+    get:
+      summary: List parts
+      description: Returns all parts, optionally filtered by category, supplier, or search query.
+      operationId: listParts
+      tags:
+        - inventory
+      parameters:
+        - name: cat
+          in: query
+          required: false
+          description: Filter by category
+          schema:
+            type: string
+        - name: supplier
+          in: query
+          required: false
+          description: Filter by supplier name
+          schema:
+            type: string
+        - name: q
+          in: query
+          required: false
+          description: Full-text search across part number, description, and category
+          schema:
+            type: string
+        - name: siteId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Parts list retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PartDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      summary: Create a part
+      description: Registers a new spare part or MRO item in the catalog.
+      operationId: createPart
+      tags:
+        - inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartCreateRequest'
+      responses:
+        '200':
+          description: Part created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartDto'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /parts/{id}:
+    put:
+      summary: Update a part
+      description: Updates an existing part record.
+      operationId: updatePart
+      tags:
+        - inventory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartUpdateRequest'
+      responses:
+        '200':
+          description: Part updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartDto'
+        '404':
+          description: Part not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      summary: Delete a part
+      description: Permanently removes a part from the catalog.
+      operationId: deletePart
+      tags:
+        - inventory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Part deleted
+        '404':
+          description: Part not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /parts/{id}/adjust:
+    post:
+      summary: Adjust stock
+      description: Adjusts the stock level for a part (positive = receive, negative = issue).
+      operationId: adjustStock
+      tags:
+        - inventory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockAdjustRequest'
+      responses:
+        '200':
+          description: Stock adjusted, updated part returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartDto'
+        '400':
+          description: Invalid adjustment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        '404':
+          description: Part not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /parts/reorder-alerts:
+    get:
+      summary: Get reorder alerts
+      description: Returns parts at or below reorder point.
+      operationId: getReorderAlerts
+      tags:
+        - inventory
+      responses:
+        '200':
+          description: Reorder alerts retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PartDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /parts/stock-movements:
+    get:
+      summary: List stock movements
+      description: Returns the stock movement history (issues, receipts, adjustments).
+      operationId: listStockMovements
+      tags:
+        - inventory
+      parameters:
+        - name: partId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Stock movements retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockMovementDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -3169,6 +3437,20 @@ components:
       $ref: './schemas/reliability.yaml#/components/schemas/FailureEdgeDto'
     TopFailingAssetDto:
       $ref: './schemas/reliability.yaml#/components/schemas/TopFailingAssetDto'
+
+    # Inventory ($ref to schemas/inventory.yaml)
+    InventoryKpisDto:
+      $ref: './schemas/inventory.yaml#/components/schemas/InventoryKpisDto'
+    PartDto:
+      $ref: './schemas/inventory.yaml#/components/schemas/PartDto'
+    PartCreateRequest:
+      $ref: './schemas/inventory.yaml#/components/schemas/PartCreateRequest'
+    PartUpdateRequest:
+      $ref: './schemas/inventory.yaml#/components/schemas/PartUpdateRequest'
+    StockAdjustRequest:
+      $ref: './schemas/inventory.yaml#/components/schemas/StockAdjustRequest'
+    StockMovementDto:
+      $ref: './schemas/inventory.yaml#/components/schemas/StockMovementDto'
 
     # Predictive ($ref to schemas/predictive.yaml)
     SensorStatus:
