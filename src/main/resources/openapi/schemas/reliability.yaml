@@ -331,6 +331,46 @@ components:
         - from
         - to
       properties:
+        id:
+          type: string
+          description: Edge identifier (used to delete the relationship)
+        from:
+          type: string
+          description: Source node ID
+          example: "C1"
+        to:
+          type: string
+          description: Target node ID
+          example: "M1"
+
+    FailureNodeCreateRequest:
+      type: object
+      description: Payload to add a node to the failure network
+      required:
+        - label
+        - type
+      properties:
+        label:
+          type: string
+          example: "Seal degradation"
+        type:
+          type: string
+          enum: [cause, mechanism, mode, effect]
+          example: "mechanism"
+        category:
+          type: string
+          example: "Mechanical"
+        desc:
+          type: string
+          description: Short definition of the failure node
+
+    FailureEdgeCreateRequest:
+      type: object
+      description: Payload to add a directed relationship between two nodes
+      required:
+        - from
+        - to
+      properties:
         from:
           type: string
           description: Source node ID

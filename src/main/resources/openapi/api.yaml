@@ -8,7 +8,7 @@ info:
     This specification is the single source of truth for all API interfaces.
     Server stubs (Spring Boot) and client code (Angular) are generated from it.
     Do not write HTTP glue code by hand — regenerate from this spec.
-  version: 2.6.0
+  version: 2.7.0
   contact:
     name: CMMS Team
     url: https://github.com/babakmirghafari/cmms-api-contract
@@ -3009,6 +3009,54 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      summary: Create a failure network node
+      description: Adds a new cause/mechanism/mode/effect node to the failure network graph.
+      operationId: createFailureNode
+      tags:
+        - reliability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FailureNodeCreateRequest'
+      responses:
+        '201':
+          description: Node created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailureNodeDto'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /failure-nodes/{id}:
+    delete:
+      summary: Delete a failure network node
+      description: Removes a node and every relationship that references it.
+      operationId: deleteFailureNode
+      tags:
+        - reliability
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Node deleted
+        '404':
+          description: Node not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
 
   /failure-edges:
     get:
@@ -3028,6 +3076,54 @@ paths:
                   $ref: '#/components/schemas/FailureEdgeDto'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      summary: Create a failure network relationship
+      description: Adds a directed edge (from → to) between two failure nodes.
+      operationId: createFailureEdge
+      tags:
+        - reliability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FailureEdgeCreateRequest'
+      responses:
+        '201':
+          description: Relationship created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailureEdgeDto'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /failure-edges/{id}:
+    delete:
+      summary: Delete a failure network relationship
+      description: Removes a single directed edge by its identifier.
+      operationId: deleteFailureEdge
+      tags:
+        - reliability
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Relationship deleted
+        '404':
+          description: Relationship not found
           content:
             application/json:
               schema:
@@ -4518,6 +4614,10 @@ components:
       $ref: './schemas/reliability.yaml#/components/schemas/FailureNodeDto'
     FailureEdgeDto:
       $ref: './schemas/reliability.yaml#/components/schemas/FailureEdgeDto'
+    FailureNodeCreateRequest:
+      $ref: './schemas/reliability.yaml#/components/schemas/FailureNodeCreateRequest'
+    FailureEdgeCreateRequest:
+      $ref: './schemas/reliability.yaml#/components/schemas/FailureEdgeCreateRequest'
     TopFailingAssetDto:
       $ref: './schemas/reliability.yaml#/components/schemas/TopFailingAssetDto'
 
