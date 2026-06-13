@@ -1,0 +1,366 @@
+openapi: "3.0.3"
+info:
+  title: CMMS Reliability Schemas
+  version: "2.0.0"
+
+components:
+  schemas:
+
+    # ── Reliability KPIs ─────────────────────────────────────────────────────
+    ReliabilityKpisDto:
+      type: object
+      description: ISO 14224 reliability KPI summary (MTBF, MTTR, Availability, OEE)
+      required:
+        - mtbf
+        - mttr
+        - availability
+        - oee
+      properties:
+        mtbf:
+          type: number
+          format: double
+          description: Mean time between failures (hours)
+          example: 342.0
+        mtbfTrend:
+          type: string
+          description: Trend direction (up/down/stable)
+          enum: [up, down, stable]
+          example: "up"
+        mtbfDelta:
+          type: string
+          description: Human-readable change from prior period
+          example: "+8.2%"
+        mttr:
+          type: number
+          format: double
+          description: Mean time to repair (hours)
+          example: 4.6
+        mttrTrend:
+          type: string
+          enum: [up, down, stable]
+          example: "down"
+        mttrDelta:
+          type: string
+          example: "-12%"
+        availability:
+          type: number
+          format: double
+          description: Asset uptime as percentage (0–100)
+          example: 97.4
+        availabilityTrend:
+          type: string
+          enum: [up, down, stable]
+          example: "up"
+        availabilityDelta:
+          type: string
+          example: "+0.6%"
+        oee:
+          type: number
+          format: double
+          description: Overall Equipment Effectiveness as percentage (0–100)
+          example: 82.1
+        oeeTrend:
+          type: string
+          enum: [up, down, stable]
+          example: "up"
+        oeeDelta:
+          type: string
+          example: "+1.9%"
+
+    # ── MTBF trend data point ────────────────────────────────────────────────
+    MtbfTrendPointDto:
+      type: object
+      description: One weekly MTBF value in the trend chart
+      required:
+        - week
+        - value
+      properties:
+        week:
+          type: string
+          description: ISO week label (e.g. "W1", "W2")
+          example: "W1"
+        value:
+          type: number
+          format: double
+          description: MTBF in hours for that week
+          example: 298.0
+
+    # ── Downtime by month ────────────────────────────────────────────────────
+    DowntimeByMonthDto:
+      type: object
+      description: Total downtime hours for one calendar month
+      required:
+        - month
+        - hours
+      properties:
+        month:
+          type: string
+          description: Month abbreviation
+          example: "Jan"
+        hours:
+          type: number
+          format: double
+          description: Total downtime hours for that month
+          example: 42.0
+
+    # ── Failure mode distribution ────────────────────────────────────────────
+    FailureModeDistributionDto:
+      type: object
+      description: One slice of the ISO 14224 failure-modes donut chart
+      required:
+        - label
+        - count
+      properties:
+        label:
+          type: string
+          description: Failure mode label
+          example: "Vibration / noise"
+        count:
+          type: integer
+          description: Number of failures with this mode in the period
+          example: 18
+
+    # ── Failure event ────────────────────────────────────────────────────────
+    FailureEventDto:
+      type: object
+      description: An ISO 14224 failure event record
+      required:
+        - id
+        - asset
+        - mode
+        - date
+        - class
+      properties:
+        id:
+          type: string
+          description: Failure event identifier
+          example: "FL-1182"
+        asset:
+          type: string
+          description: Asset tag of the failed asset
+          example: "CMP-01"
+        mode:
+          type: string
+          description: ISO 14224 failure mode description
+          example: "Vibration / noise"
+        cause:
+          type: string
+          description: Root cause of the failure
+          example: "Bearing wear"
+        detection:
+          type: string
+          description: How the failure was detected
+          enum:
+            - Condition monitoring
+            - Operator
+            - Inspection
+            - Performance monitoring
+          example: "Condition monitoring"
+        action:
+          type: string
+          description: Corrective action taken
+          example: "Replace DE/NDE bearings"
+        downtime:
+          type: string
+          description: Total downtime duration
+          example: "6.0 h"
+        cost:
+          type: string
+          description: Repair cost (display string with currency symbol)
+          example: "€520"
+        date:
+          type: string
+          format: date
+          description: Date the failure was logged
+          example: "2026-05-28"
+        class:
+          type: string
+          description: Severity classification
+          enum:
+            - Incipient
+            - Degraded
+            - Critical
+          example: "Degraded"
+        woId:
+          type: string
+          description: Linked work order ID (null if no WO was raised)
+          example: "WO-24817"
+        nodeIds:
+          type: array
+          description: IDs of failure-network nodes linked to this event
+          items:
+            type: string
+          example: ["C1", "M1", "MO1", "E1"]
+
+    # ── Create failure event ─────────────────────────────────────────────────
+    FailureEventCreateRequest:
+      type: object
+      description: Payload to log a new failure event
+      required:
+        - asset
+        - mode
+        - class
+      properties:
+        asset:
+          type: string
+          example: "CMP-01"
+        mode:
+          type: string
+          example: "Vibration / noise"
+        cause:
+          type: string
+          example: "Bearing wear"
+        detection:
+          type: string
+          enum:
+            - Condition monitoring
+            - Operator
+            - Inspection
+            - Performance monitoring
+          example: "Condition monitoring"
+        action:
+          type: string
+          example: "Replace DE/NDE bearings"
+        downtime:
+          type: string
+          example: "6.0 h"
+        cost:
+          type: string
+          example: "€520"
+        date:
+          type: string
+          format: date
+          example: "2026-05-28"
+        class:
+          type: string
+          enum:
+            - Incipient
+            - Degraded
+            - Critical
+          example: "Degraded"
+        woId:
+          type: string
+          example: "WO-24817"
+        nodeIds:
+          type: array
+          items:
+            type: string
+          example: ["C1", "M1", "MO1", "E1"]
+
+    # ── Update failure event ─────────────────────────────────────────────────
+    FailureEventUpdateRequest:
+      type: object
+      description: Payload to update an existing failure event
+      properties:
+        asset:
+          type: string
+        mode:
+          type: string
+        cause:
+          type: string
+        detection:
+          type: string
+          enum:
+            - Condition monitoring
+            - Operator
+            - Inspection
+            - Performance monitoring
+        action:
+          type: string
+        downtime:
+          type: string
+        cost:
+          type: string
+        date:
+          type: string
+          format: date
+        class:
+          type: string
+          enum:
+            - Incipient
+            - Degraded
+            - Critical
+        woId:
+          type: string
+        nodeIds:
+          type: array
+          items:
+            type: string
+
+    # ── Failure network node ─────────────────────────────────────────────────
+    FailureNodeDto:
+      type: object
+      description: A node in the ISO 14224 failure network (cause/mechanism/mode/effect)
+      required:
+        - id
+        - label
+        - type
+        - category
+      properties:
+        id:
+          type: string
+          description: Node identifier
+          example: "C1"
+        label:
+          type: string
+          description: Human-readable node label
+          example: "Lubrication breakdown"
+        type:
+          type: string
+          description: Node type in the causal chain
+          enum:
+            - cause
+            - mechanism
+            - mode
+            - effect
+          example: "cause"
+        category:
+          type: string
+          description: ISO 14224 category
+          example: "Tribology"
+        desc:
+          type: string
+          description: Full description of this node
+          example: "Loss or degradation of lubricant film."
+
+    # ── Failure network edge ─────────────────────────────────────────────────
+    FailureEdgeDto:
+      type: object
+      description: A directed edge in the failure network graph
+      required:
+        - from
+        - to
+      properties:
+        from:
+          type: string
+          description: Source node ID
+          example: "C1"
+        to:
+          type: string
+          description: Target node ID
+          example: "M1"
+
+    # ── Top failing asset ────────────────────────────────────────────────────
+    TopFailingAssetDto:
+      type: object
+      description: Asset ranked by failure count in the selected period
+      required:
+        - asset
+        - failures
+      properties:
+        asset:
+          type: string
+          description: Asset display name
+          example: "Air Compressor K-01"
+        failures:
+          type: integer
+          description: Number of failure events in the period
+          example: 7
+        downtime:
+          type: string
+          description: Total downtime (display string)
+          example: "34 h"
+        cost:
+          type: string
+          description: Total repair cost (display string with currency symbol)
+          example: "€3,210"
