@@ -8,7 +8,7 @@ info:
     This specification is the single source of truth for all API interfaces.
     Server stubs (Spring Boot) and client code (Angular) are generated from it.
     Do not write HTTP glue code by hand — regenerate from this spec.
-  version: 2.1.0
+  version: 2.2.0
   contact:
     name: CMMS Team
     url: https://github.com/babakmirghafari/cmms-api-contract
@@ -47,6 +47,8 @@ tags:
     description: Reliability Center — ISO 14224 failure analysis, MTBF/MTTR/Availability/OEE KPIs, failure event CRUD, failure network graph, and top-failing assets
   - name: inventory
     description: Inventory — spare-parts / MRO catalog, stock levels, reorder alerts, stock movements, and adjustments
+  - name: procurement
+    description: Procurement — purchase orders, purchase requests, and supplier management
 
 paths:
   /health:
@@ -3289,6 +3291,339 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponseDto'
 
+  # ─── Procurement ────────────────────────────────────────────────────────────
+
+  /procurement/kpis:
+    get:
+      summary: Get procurement KPIs
+      description: Returns open PO count, pending approval count, MTD spend, and active supplier count.
+      operationId: getProcurementKpis
+      tags:
+        - procurement
+      responses:
+        '200':
+          description: Procurement KPI summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcurementKpisDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /purchase-orders:
+    get:
+      summary: List purchase orders
+      operationId: listPurchaseOrders
+      tags:
+        - procurement
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of purchase orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseOrderDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      summary: Create purchase order
+      operationId: createPurchaseOrder
+      tags:
+        - procurement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseOrderCreateRequest'
+      responses:
+        '200':
+          description: Created purchase order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /purchase-orders/{id}:
+    put:
+      summary: Update purchase order
+      operationId: updatePurchaseOrder
+      tags:
+        - procurement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseOrderUpdateRequest'
+      responses:
+        '200':
+          description: Updated purchase order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrderDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      summary: Delete purchase order
+      operationId: deletePurchaseOrder
+      tags:
+        - procurement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /purchase-requests:
+    get:
+      summary: List purchase requests
+      operationId: listPurchaseRequests
+      tags:
+        - procurement
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of purchase requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurchaseRequestDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      summary: Create purchase request
+      operationId: createPurchaseRequest
+      tags:
+        - procurement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequestCreateRequest'
+      responses:
+        '200':
+          description: Created purchase request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseRequestDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /purchase-requests/{id}:
+    put:
+      summary: Update purchase request
+      operationId: updatePurchaseRequest
+      tags:
+        - procurement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequestUpdateRequest'
+      responses:
+        '200':
+          description: Updated purchase request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseRequestDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      summary: Delete purchase request
+      operationId: deletePurchaseRequest
+      tags:
+        - procurement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /suppliers:
+    get:
+      summary: List suppliers
+      operationId: listSuppliers
+      tags:
+        - procurement
+      responses:
+        '200':
+          description: List of suppliers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupplierDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      summary: Create supplier
+      operationId: createSupplier
+      tags:
+        - procurement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierCreateRequest'
+      responses:
+        '200':
+          description: Created supplier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /suppliers/{id}:
+    put:
+      summary: Update supplier
+      operationId: updateSupplier
+      tags:
+        - procurement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierUpdateRequest'
+      responses:
+        '200':
+          description: Updated supplier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierDto'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      summary: Delete supplier
+      operationId: deleteSupplier
+      tags:
+        - procurement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -3451,6 +3786,28 @@ components:
       $ref: './schemas/inventory.yaml#/components/schemas/StockAdjustRequest'
     StockMovementDto:
       $ref: './schemas/inventory.yaml#/components/schemas/StockMovementDto'
+
+    # Procurement ($ref to schemas/procurement.yaml)
+    ProcurementKpisDto:
+      $ref: './schemas/procurement.yaml#/components/schemas/ProcurementKpisDto'
+    PurchaseOrderDto:
+      $ref: './schemas/procurement.yaml#/components/schemas/PurchaseOrderDto'
+    PurchaseOrderCreateRequest:
+      $ref: './schemas/procurement.yaml#/components/schemas/PurchaseOrderCreateRequest'
+    PurchaseOrderUpdateRequest:
+      $ref: './schemas/procurement.yaml#/components/schemas/PurchaseOrderUpdateRequest'
+    PurchaseRequestDto:
+      $ref: './schemas/procurement.yaml#/components/schemas/PurchaseRequestDto'
+    PurchaseRequestCreateRequest:
+      $ref: './schemas/procurement.yaml#/components/schemas/PurchaseRequestCreateRequest'
+    PurchaseRequestUpdateRequest:
+      $ref: './schemas/procurement.yaml#/components/schemas/PurchaseRequestUpdateRequest'
+    SupplierDto:
+      $ref: './schemas/procurement.yaml#/components/schemas/SupplierDto'
+    SupplierCreateRequest:
+      $ref: './schemas/procurement.yaml#/components/schemas/SupplierCreateRequest'
+    SupplierUpdateRequest:
+      $ref: './schemas/procurement.yaml#/components/schemas/SupplierUpdateRequest'
 
     # Predictive ($ref to schemas/predictive.yaml)
     SensorStatus:
