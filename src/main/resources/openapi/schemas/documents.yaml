@@ -1,0 +1,164 @@
+openapi: 3.1.0
+info:
+  title: CMMS Documents Schemas
+  version: 2.4.0
+
+components:
+  schemas:
+
+    # ── Category counts ───────────────────────────────────────────────────────
+
+    DocumentCategoryDto:
+      type: object
+      description: Document count per category
+      required:
+        - name
+        - count
+      properties:
+        name:
+          type: string
+          description: Category name
+          example: "Drawings"
+        count:
+          type: integer
+          description: Number of documents in this category
+          example: 312
+
+    # ── Document ──────────────────────────────────────────────────────────────
+
+    DocumentDto:
+      type: object
+      description: A technical document with version control metadata
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique document identifier
+          example: "DOC-501"
+        name:
+          type: string
+          description: Document name
+          example: "Pump Assembly Manual"
+        cat:
+          type: string
+          description: Document category
+          enum:
+            - Drawings
+            - Manuals
+            - Certificates
+            - Safety Documents
+            - Procedures
+          example: "Manuals"
+        assetId:
+          type: string
+          description: Related asset identifier
+          example: "AST-1001"
+        version:
+          type: string
+          description: Document version string
+          example: "v3.2"
+        owner:
+          type: string
+          description: Document owner / responsible person
+          example: "J. Okonkwo"
+        date:
+          type: string
+          format: date
+          description: Date the document was last updated
+          example: "2026-05-14"
+        status:
+          type: string
+          description: Approval status
+          enum:
+            - Draft
+            - Under Review
+            - Approved
+          example: "Approved"
+
+    # ── Create request ────────────────────────────────────────────────────────
+
+    DocumentCreateRequest:
+      type: object
+      description: Request body for creating a new document
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Document name
+          example: "Compressor Maintenance Procedure"
+        cat:
+          type: string
+          description: Document category
+          enum:
+            - Drawings
+            - Manuals
+            - Certificates
+            - Safety Documents
+            - Procedures
+          example: "Procedures"
+        assetId:
+          type: string
+          description: Related asset identifier
+          example: "AST-1003"
+        version:
+          type: string
+          description: Document version string
+          example: "v1.0"
+        owner:
+          type: string
+          description: Document owner / responsible person
+          example: "A. Petrov"
+        status:
+          type: string
+          description: Approval status
+          enum:
+            - Draft
+            - Under Review
+            - Approved
+          default: Draft
+          example: "Draft"
+
+    # ── Update request ────────────────────────────────────────────────────────
+
+    DocumentUpdateRequest:
+      type: object
+      description: Request body for updating an existing document
+      properties:
+        name:
+          type: string
+          description: Document name
+          example: "Compressor Maintenance Procedure v2"
+        cat:
+          type: string
+          description: Document category
+          enum:
+            - Drawings
+            - Manuals
+            - Certificates
+            - Safety Documents
+            - Procedures
+          example: "Procedures"
+        assetId:
+          type: string
+          description: Related asset identifier
+          example: "AST-1003"
+        version:
+          type: string
+          description: Document version string
+          example: "v2.0"
+        owner:
+          type: string
+          description: Document owner / responsible person
+          example: "A. Petrov"
+        status:
+          type: string
+          description: Approval status
+          enum:
+            - Draft
+            - Under Review
+            - Approved
+          example: "Under Review"
